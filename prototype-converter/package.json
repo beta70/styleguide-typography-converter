@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite & npx tailwindcss -i ./src/assets/css/index.css -o ./dist/main.css --watch",
     "build": "vite build",
     "preview": "vite preview"
   },
