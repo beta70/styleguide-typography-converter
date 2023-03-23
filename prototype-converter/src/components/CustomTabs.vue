@@ -1,14 +1,27 @@
 <script setup>
+    
     import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue'
+    import { ref } from 'vue'
+
+    const props = defineProps({
+        field: Object
+    })
+    const emit = defineEmits(['handleConversionOptions'])
+
+    const active = ref('')
+    function toggleOption(option,event) {
+        emit('handleConversionOptions',props.field.name,option)
+    }
+
 </script>
 
 <template>
     <TabGroup>
         <TabList
-            :class="[this.field.conversionOptions.length === 2 ? 'grid-cols-2' : 'grid-cols-3', 'grid justify-items-start']"
+            :class="[field.conversionOptions.length === 2 ? 'grid-cols-2' : 'grid-cols-3', 'grid justify-items-start']"
         >
             <Tab
-                v-for="option in this.field.conversionOptions" 
+                v-for="option in field.conversionOptions" 
                 :key="option"
                 :value="option" 
                 v-slot="{ selected }"
@@ -25,34 +38,5 @@
         </TabList>
     </TabGroup>
 </template>
-
-<script>
-
-export default {
-
-    data() {
-        return {
-            active: '',
-        }
-    },
-    props: ['field'],
-    methods: {
-        toggleOption(option,event) {
-            this.activeOption = option
-            this.showFontSizeRange = option === 'clamp()' ? true : false
-            this.$emit('handleConversionOptions',this.field.name,option)
-        },
-    },
-    computed: {
-        activeOption() {
-            const activeOption = this.field.conversionOptions.filter(option => option === this.activeOption)[0]
-            return activeOption ? activeOption : this.field.conversionOptions[0]
-        }
-    },
-    mounted() {
-    }
-}
-
-</script>
 
 

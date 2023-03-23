@@ -1,6 +1,23 @@
 <script setup>
-import FormRow from './FormRow.vue';
-import CustomInput from './CustomInput.vue';
+
+    import FormRow from './FormRow.vue';
+    import CustomInput from './CustomInput.vue';
+
+    const props = defineProps({
+        baseFontSize: String,
+        maxScreenWidth: String,
+        formRows: Object,
+    })
+    const emit = defineEmits({
+        addFormRow: null,
+        deleteFormRow: null,
+        handleInputData: null, 
+        handleFontSizeInput: null, 
+        handleGlobalInputData: (property,inputValue) => {
+            return (inputValue.length > 1)
+        }
+    })
+
 </script>
 
 <template>
@@ -21,7 +38,7 @@ import CustomInput from './CustomInput.vue';
                 </div>
             </div>
             <FormRow
-                v-for="(formRow,index) in this.formRows"
+                v-for="(formRow,index) in formRows"
                 :key="formRow"
                 v-bind:fields="formRow.fields"
                 v-bind:form-row-id="formRow.id"
@@ -50,38 +67,3 @@ import CustomInput from './CustomInput.vue';
         </div>
     </form>
 </template>
-
-<script>
-
-    export default {
-    data() {
-        return {
-        };
-    },
-    props: {
-        baseFontSize: '',
-        maxScreenWidth: '',
-        formRows: Object,
-    },
-    computed: {
-        isFirstFormRow() {
-            return 
-        }
-    },
-    methods: {
-    },
-    emits: {
-        addFormRow: null,
-        deleteFormRow: null,
-        handleInputData: null, 
-        handleFontSizeInput: null, 
-        handleGlobalInputData(property,inputValue) {
-            return (inputValue.length > 1)
-        }
-    },
-    mounted() {
-    },
-    components: { FormRow }
-}
-
-</script>

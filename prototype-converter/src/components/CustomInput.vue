@@ -1,7 +1,43 @@
 <script setup>
-import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { ArrowsRightLeftIcon } from '@heroicons/vue/20/solid'
-import CustomTabs from './CustomTabs.vue';
+
+    import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
+    import { ArrowsRightLeftIcon } from '@heroicons/vue/20/solid'
+    import CustomTabs from './CustomTabs.vue';
+    import { ref } from 'vue';
+
+    const props = defineProps({
+        field: Object
+    })
+    const emit = defineEmits({
+        handleFontSizeInput: null,
+        handleConversionOptions: null,
+        handleInputData: (property,value) => {
+            return value.length > 1
+        },
+    })
+
+    const textColor = ref('')
+    function handleInputData(fieldName,value) {
+        if (fieldName === 'color') {
+            if (!value) {
+                textColor.value = '#292524'
+                return
+            }
+            value = value.startsWith('#') ? value : `#${value}`
+            textColor.value = value 
+        }
+        emit('handleInputData',fieldName,value)
+    }
+    
+    const showFontSizeRange = ref(false)
+    function handleFontSizeInput(range,fieldName,value) {
+        emit('handleFontSizeInput',range,fieldName,value)
+    }
+
+    function handleConversionOptions(property,value) {
+        showFontSizeRange.value = value === 'clamp()' ? true : false
+        emit('handleConversionOptions',property,value)
+    }
 
 </script>
 
@@ -17,98 +53,50 @@ import CustomTabs from './CustomTabs.vue';
             <div
                 v-if="field.name === 'color'"
                 class="w-full h-full"
-                :style="{ 'background': this.textColor }"
+                :style="{ 'background': textColor }"
             >
             </div>
             <div 
-                v-if="this.field.range"
+                v-if="field.range"
                 class="flex gap-4"
             >
                 <div class="flex flex-col relative">
                     <input 
-                    :placeholder="this.field.placeholder" 
-                    @change="handleFontSizeInput('min',this.field.name,value)"
+                    :placeholder="field.placeholder" 
+                    @change="handleFontSizeInput('min',field.name,value)"
                     v-model="value"
                     class="block w-full py-3 bg-transparent border-white border-b text-gray-200 sm:text-xl font-thin placeholder-gray-200/50 focus:outline-none" 
                     />
                     <label 
                         class="block absolute -bottom-6 text-xs tracking-wider text-white uppercase mt-2"
-                        :class="[this.showFontSizeRange ? 'visible' : 'invisible']"
+                        :class="[showFontSizeRange ? 'visible' : 'invisible']"
                     >
                         min 
                     </label>
                 </div>
                 <div class="flex flex-col relative">
                     <input 
-                    :placeholder="this.field.placeholder" 
-                    @change="handleFontSizeInput('max',this.field.name,value)"
+                    :placeholder="field.placeholder" 
+                    @change="handleFontSizeInput('max',field.name,value)"
                     v-model="value"
-                    :class="[this.showFontSizeRange ? 'visible' : 'invisible']"
+                    :class="[showFontSizeRange ? 'visible' : 'invisible']"
                     class="block w-full py-3 bg-transparent border-white border-b text-gray-200 sm:text-xl font-thin placeholder-gray-200/50 focus:outline-none" 
                     />
                     <label 
                         class="absolute -bottom-6 text-xs tracking-wider text-white uppercase mt-2"
-                        :class="[this.showFontSizeRange ? 'visible' : 'invisible']"
+                        :class="[showFontSizeRange ? 'visible' : 'invisible']"
                     >
                         max
                     </label>
                 </div>
             </div>
             <input 
-                v-if="!this.field.range"
-                :placeholder="this.field.placeholder" 
+                v-if="!field.range"
+                :placeholder="field.placeholder" 
                 v-model="value"
-                @change="handleInputData(this.field.name,value)"
+                @change="handleInputData(field.name,value)"
                 class="block w-full py-3 bg-transparent border-white border-b text-gray-200 sm:text-xl font-thin placeholder-gray-200/50 focus:outline-none" 
             />
         </div>
     </div>
 </template>
-
-<script>
-
-    export default {
-        data() {
-            return {
-                textColor: '',
-                showFontSizeRange: false,
-            }
-        },
-        props: ['field'],
-        methods: {
-            handleInputData(fieldName,value) {
-                if (fieldName === 'color') {
-                    if (!value) {
-                        this.textColor = '#292524'
-                        return
-                    }
-                    value = value.startsWith('#') ? value : `#${value}`
-                    this.textColor = value 
-                }
-                this.$emit('handleInputData',fieldName,value)
-            },
-            handleFontSizeInput(range,fieldName,value) {
-                this.$emit('handleFontSizeInput',range,fieldName,value)
-            },
-            handleConversionOptions(property,value) {
-                this.showFontSizeRange = value === 'clamp()' ? true : false
-                this.$emit('handleConversionOptions',property,value)
-            },
-        },
-        computed: {
-            textColor() {
-                return this.textColor 
-            }
-        },
-        emits: {
-            handleFontSizeInput: null,
-            handleInputData(property,value) {
-                return (value.length > 1)
-            },
-        },
-        mounted() {
-        },
-        components: { CustomTabs }
-    }
-
-</script>
