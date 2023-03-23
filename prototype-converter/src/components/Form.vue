@@ -4,22 +4,24 @@ import CustomInput from './CustomInput.vue';
 </script>
 
 <template>
-    <form class="p-8">
-        <div class="flex flex-col items-center bg-black/10 p-8 rounded-2xl gap-16">
-            <!-- <div>
-                <CustomInput 
-                    v-bind:css-property="{ name: 'base font-size', placeholder: '16px' }"
-                    @handle-input-data="(property,value) => $emit('handleGlobalInputData',property,value.replace(/\D/g,''))" 
-                />
+    <form class="">
+        <div class="flex flex-col items-center bg-stone-800 p-8 rounded-b-2xl">
+            <div class="flex justify-start w-full pb-20 gap-16 border-b border-stone-500">
+                <div>
+                    <CustomInput 
+                        v-bind:field="{ name: 'base font-size', placeholder: '16px' }"
+                        @handle-input-data="(property,value) => $emit('handleGlobalInputData',property,value.replace(/\D/g,''))" 
+                    />
+                </div>
+                <div>
+                    <CustomInput 
+                        v-bind:field="{ name: 'max screen-width', placeholder: '1920px' }"
+                        @handle-input-data="(property,value) => $emit('handleGlobalInputData',property,value.replace(/\D/g,''))" 
+                    />
+                </div>
             </div>
-            <div>
-                <CustomInput 
-                    v-bind:css-property="{ name: 'max screen-width', placeholder: '1920px' }"
-                    @handle-input-data="(property,value) => $emit('handleGlobalInputData',property,value.replace(/\D/g,''))" 
-                />
-            </div> -->
             <FormRow
-                v-for="formRow in this.formRows"
+                v-for="(formRow,index) in this.formRows"
                 :key="formRow"
                 v-bind:fields="formRow.fields"
                 v-bind:form-row-id="formRow.id"
@@ -27,24 +29,24 @@ import CustomInput from './CustomInput.vue';
                 @handle-input-data="(property,value,id) => $emit('handleInputData',property,value,id)"
                 @handle-conversion-options="(property,value,id) => $emit('handleConversionOptions',property,value,id)" 
                 @handle-font-size-input="(range,property,value,id) => $emit('handleFontSizeInput',range,property,value,id)" 
-                class="flex flex-wrap"
+                :class="[index !== 0 ? 'border-t border-stone-500' : '']"
             />
-            <button 
-                @click="$emit('addFormRow')"
-                type="button" 
-                class="inline-flex items-center rounded-full border border-transparent bg-indigo-600 p-2 text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-            </button>
-            <button 
-                @click="$emit('saveFormData')"
-                type="button" 
-                class="inline-flex items-center rounded border border-transparent bg-indigo-600 px-2.5 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-                Generate styles
-            </button>
+            <div class="flex gap-4 mt-12">
+                <button 
+                    @click="$emit('addFormRow')"
+                    type="button" 
+                    class="material-icons self-center text-white text-5xl font-medium hover:text-stone-200 transition-all duration-300"
+                >
+                    add_circle
+                </button>
+                <button 
+                    @click="$emit('saveFormData')"
+                    type="button" 
+                    class="material-icons self-center text-green-700 text-5xl font-medium hover:text-green-600 transition-all duration-300"
+                >
+                    check_circle
+                </button>
+            </div>
         </div>
     </form>
 </template>
@@ -60,6 +62,11 @@ import CustomInput from './CustomInput.vue';
         baseFontSize: '',
         maxScreenWidth: '',
         formRows: Object,
+    },
+    computed: {
+        isFirstFormRow() {
+            return 
+        }
     },
     methods: {
     },

@@ -3,7 +3,7 @@ import CustomInput from './CustomInput.vue';
 </script>
 
 <template>
-    <div class="flex bg-black/10 p-8 rounded-2xl gap-16">
+    <div class="flex py-20 gap-16">
         <div
             v-for="field in this.fields" 
             :key="field"
@@ -19,9 +19,9 @@ import CustomInput from './CustomInput.vue';
         <button 
             @click="$emit('deleteFormRow',this.formRowId)"
             type="button" 
-            class="inline-flex items-center rounded border border-transparent bg-indigo-600 px-2.5 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            class="material-icons self-center text-rose-700 text-5xl font-medium hover:text-rose-600 transition-all duration-300"
         >
-            Delete
+        cancel
         </button>
     </div>
 </template>
