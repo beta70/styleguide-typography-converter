@@ -5,62 +5,63 @@ export const useFormRowStore = defineStore('formRow', () => {
 
     // state
     const formRowId = ref(0)
+    const formRowFields = [
+        { 
+            name: 'font-size',
+            fieldType: 'input',
+            placeholder: '16px',
+            dataType: 'number',
+            allowedUnits: ['px','rem','em'],
+            conversionOptions: ['rem','vw','clamp()'],
+            range: true,
+            targetUnit: 'rem',
+            givenUnit: '',
+            value: {
+            min: '',
+            max: '',
+            },
+        },
+        { 
+            name: 'line-height',
+            fieldType: 'input',
+            dataType: 'number',
+            placeholder: '24px',
+            allowedUnits: ['px','rem','em','num'],
+            conversionOptions: ['num','rem'],
+            targetUnit: 'num',
+            givenUnit: '',
+            value: '',
+        },
+        { 
+            name: 'letter-spacing',
+            fieldType: 'input',
+            dataType: 'number',
+            placeholder: '1px',
+            allowedUnits: ['px','rem','em'],
+            conversionOptions: ['em','rem'],
+            targetUnit: 'em',
+            givenUnit: '',
+            value: '',
+        },
+        { 
+            name: 'font-weight',
+            fieldType: 'input',
+            placeholder: '400',
+            dataType: 'number',
+            value: '',
+        },
+        { 
+            name: 'color',
+            fieldType: 'input',
+            placeholder: '#ACACAC',
+            dataType: 'string',
+            value: '',
+        },
+    ]
     const formRows = ref([
         {
             id: formRowId.value,
-            fields: [
-                { 
-                    name: 'font-size',
-                    fieldType: 'input',
-                    placeholder: '16px',
-                    dataType: 'number',
-                    allowedUnits: ['px','rem','em'],
-                    conversionOptions: ['rem','vw','clamp()'],
-                    range: true,
-                    targetUnit: 'rem',
-                    givenUnit: '',
-                    value: {
-                    min: '',
-                    max: '',
-                    },
-                },
-                { 
-                    name: 'line-height',
-                    fieldType: 'input',
-                    dataType: 'number',
-                    placeholder: '24px',
-                    allowedUnits: ['px','rem','em','num'],
-                    conversionOptions: ['num','rem'],
-                    targetUnit: 'num',
-                    givenUnit: '',
-                    value: '',
-                },
-                { 
-                    name: 'letter-spacing',
-                    fieldType: 'input',
-                    dataType: 'number',
-                    placeholder: '1px',
-                    allowedUnits: ['px','rem','em'],
-                    conversionOptions: ['em','rem'],
-                    targetUnit: 'em',
-                    givenUnit: '',
-                    value: '',
-                },
-                { 
-                    name: 'font-weight',
-                    fieldType: 'input',
-                    placeholder: '400',
-                    dataType: 'number',
-                    value: '',
-                },
-                { 
-                    name: 'color',
-                    fieldType: 'input',
-                    placeholder: '#ACACAC',
-                    dataType: 'string',
-                    value: '',
-                },
-            ]
+            fields: formRowFields
         }
     ])
     const showFontSizeRange = ref(false)
@@ -77,59 +78,7 @@ export const useFormRowStore = defineStore('formRow', () => {
         
         formRows.value.push({
             id: formRowId.value,
-            fields: [
-                { 
-                    name: 'font-size',
-                    fieldType: 'input',
-                    placeholder: '16px',
-                    dataType: 'number',
-                    allowedUnits: ['px','rem','em'],
-                    conversionOptions: ['rem','vw','clamp()'],
-                    range: true,
-                    targetUnit: 'rem',
-                    givenUnit: '',
-                    value: {
-                    min: '',
-                    max: '',
-                    },
-                },
-                { 
-                    name: 'line-height',
-                    fieldType: 'input',
-                    dataType: 'number',
-                    placeholder: '24px',
-                    allowedUnits: ['px','rem','em','num'],
-                    conversionOptions: ['num','rem'],
-                    targetUnit: 'num',
-                    givenUnit: '',
-                    value: '',
-                },
-                { 
-                    name: 'letter-spacing',
-                    fieldType: 'input',
-                    dataType: 'number',
-                    placeholder: '1px',
-                    allowedUnits: ['px','rem','em'],
-                    conversionOptions: ['em','rem'],
-                    targetUnit: 'em',
-                    givenUnit: '',
-                    value: '',
-                },
-                { 
-                    name: 'font-weight',
-                    fieldType: 'input',
-                    placeholder: '400',
-                    dataType: 'number',
-                    value: '',
-                },
-                { 
-                    name: 'color',
-                    fieldType: 'input',
-                    placeholder: '#ACACAC',
-                    dataType: 'string',
-                    value: '',
-                },
-            ]
+            fields: JSON.parse(JSON.stringify(formRowFields))
         })
     }
     function deleteFormRow(id) {
