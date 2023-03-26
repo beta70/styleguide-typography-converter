@@ -2,16 +2,25 @@
     
     import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue'
     import { ref } from 'vue'
+    import { useFormRowStore } from '../../store/formRowStore'
+
+    const store = useFormRowStore()
 
     const props = defineProps({
-        field: Object
+        field: Object,
+        formRowId: Number
     })
-    const emit = defineEmits(['handleConversionOptions'])
 
-    const active = ref('')
-    function toggleOption(option,event) {
-        emit('handleConversionOptions',props.field.name,option)
+    const emit = defineEmits(['toggleFontSizeRange'])
+
+    function toggleFontSizeRange(value) {
+        emit('toggleFontSizeRange', value === 'clamp()' ? true : false)
     }
+    function handleOptionToggle(option,event) {
+        if (props.field.name === 'font-size') toggleFontSizeRange(option)
+        store.handleInputData(props.field.name,option,props.formRowId,'targetUnit')
+    }
+    
 
 </script>
 
@@ -27,7 +36,7 @@
                 v-slot="{ selected }"
                 as="button"
                 class="col-span-1 w-full"
-                @click="toggleOption(option,$event)"
+                @click="handleOptionToggle(option)"
             >
                 <div
                     :class="[selected ? 'bg-white text-stone-800' : 'bg-stone-700 text-white', 'uppercase tracking-wider text-xs w-full p-3 transition duration-200'] "

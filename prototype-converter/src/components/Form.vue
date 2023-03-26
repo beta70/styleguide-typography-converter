@@ -2,17 +2,16 @@
 
     import FormRow from './FormRow.vue';
     import CustomInput from './CustomInput.vue';
+    import { useFormRowStore } from '../../store/formRowStore'
+
+    const store = useFormRowStore()
 
     const props = defineProps({
         baseFontSize: String,
         maxScreenWidth: String,
-        formRows: Object,
+        formRowId: Number,
     })
     const emit = defineEmits({
-        addFormRow: null,
-        deleteFormRow: null,
-        handleInputData: null, 
-        handleFontSizeInput: null, 
         handleGlobalInputData: (property,inputValue) => {
             return (inputValue.length > 1)
         }
@@ -38,19 +37,16 @@
                 </div>
             </div>
             <FormRow
-                v-for="(formRow,index) in formRows"
+                v-for="(formRow,index) in store.formRows"
                 :key="formRow"
                 v-bind:fields="formRow.fields"
-                v-bind:form-row-id="formRow.id"
+                v-bind:formRowId="formRow.id"
                 @delete-form-row="(id) => $emit('deleteFormRow',id)"
-                @handle-input-data="(property,value,id) => $emit('handleInputData',property,value,id)"
-                @handle-conversion-options="(property,value,id) => $emit('handleConversionOptions',property,value,id)" 
-                @handle-font-size-input="(range,property,value,id) => $emit('handleFontSizeInput',range,property,value,id)" 
                 :class="[index !== 0 ? 'border-t border-stone-500' : '']"
             />
             <div class="flex gap-4 mt-12">
                 <button 
-                    @click="$emit('addFormRow')"
+                    @click="store.addFormRow()"
                     type="button" 
                     class="material-icons self-center text-white text-5xl font-medium hover:text-stone-200 transition-all duration-300"
                 >
