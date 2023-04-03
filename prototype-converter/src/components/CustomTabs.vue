@@ -2,7 +2,7 @@
     
     import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue'
     import { ref } from 'vue'
-    import { useFormRowStore } from '../../store/formRowStore'
+    import { useFormRowStore } from '../stores/formRowStore'
 
     const store = useFormRowStore()
 

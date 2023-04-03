@@ -4,7 +4,7 @@
     import { ArrowsRightLeftIcon } from '@heroicons/vue/20/solid'
     import CustomTabs from './CustomTabs.vue';
     import { ref } from 'vue';
-    import { useFormRowStore } from '../../store/formRowStore'
+    import { useFormRowStore } from '../stores/formRowStore'
 
     const store = useFormRowStore()
 
@@ -46,7 +46,10 @@
                 v-if="field.range"
                 class="flex gap-4"
             >
-                <div class="flex flex-col relative">
+                <div 
+                    class="flex flex-col relative"
+                    :class="[showFontSizeRange ? 'visible order-1' : 'invisible order-2']"
+                    >
                     <input 
                     :placeholder="field.placeholder" 
                     @change="store.handleInputData(field.name,value,formRowId,'min')"
@@ -54,23 +57,25 @@
                     class="block w-full py-3 bg-transparent border-white border-b text-gray-200 sm:text-xl font-thin placeholder-gray-200/50 focus:outline-none" 
                     />
                     <label 
-                        class="block absolute -bottom-6 text-xs tracking-wider text-white uppercase mt-2"
-                        :class="[showFontSizeRange ? 'visible' : 'invisible']"
+                    class="block absolute -bottom-6 text-xs tracking-wider text-white uppercase mt-2"
+                    :class="[showFontSizeRange ? 'visible order-2' : 'invisible order-1']"
                     >
-                        min 
-                    </label>
+                    min 
+                </label>
                 </div>
-                <div class="flex flex-col relative">
+                <div 
+                    class="flex flex-col relative"
+                    :class="[showFontSizeRange ? 'order-2' : 'order-1']"
+                >
                     <input 
                     :placeholder="field.placeholder" 
                     @change="store.handleInputData(field.name,value,formRowId,'max')"
                     v-model="value"
-                    :class="[showFontSizeRange ? 'visible' : 'invisible']"
                     class="block w-full py-3 bg-transparent border-white border-b text-gray-200 sm:text-xl font-thin placeholder-gray-200/50 focus:outline-none" 
                     />
                     <label 
                         class="absolute -bottom-6 text-xs tracking-wider text-white uppercase mt-2"
-                        :class="[showFontSizeRange ? 'visible' : 'invisible']"
+                        :class="[showFontSizeRange ? 'visible order-2' : 'invisible order-1']"
                     >
                         max
                     </label>
@@ -86,3 +91,4 @@
         </div>
     </div>
 </template>
+
