@@ -1,19 +1,38 @@
 <script setup>
 
     import CustomInput from './CustomInput.vue';
-    import { useFormRowStore } from '../../store/formRowStore'
+    import { useFormRowStore } from '../stores/formRowStore'
+    import { ref } from 'vue';
 
     const store = useFormRowStore()
 
     const props = defineProps({
         fields: Object,
-        formRowId: Number
+        formRowId: Number,
+        index: Number,
     })
 
 </script>
 
 <template>
     <div class="flex py-20 gap-16">
+        <div 
+            class="flex items-center"
+        >
+            <input 
+                :id="formRowId" 
+                name="base font-size" 
+                type="radio" 
+                @change="store.setBaseStyle(formRowId)"
+                class="h-4 w-4 border-gray-300 text-stone-600 focus:ring-white-600"
+            >
+            <label 
+                :for="formRowId" 
+                class="ml-3 block text-xs tracking-wider text-white uppercase"
+            >
+                base
+            </label>
+        </div>
         <div
             v-for="field in fields" 
             :key="field"
