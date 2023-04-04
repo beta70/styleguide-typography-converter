@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia'
-import { ref, computed, watchEffect, watch } from 'vue'
+import { ref, computed, watchEffect } from 'vue'
 
 export const useFormRowStore = defineStore('formRow', () => {
+    
     // ######################################
     //                  state
     // ######################################
+
     const formRowId = ref(0)
     const bodyFontSize = ref(16)
     const maxScreenWidth = ref(1920)
@@ -66,6 +68,7 @@ export const useFormRowStore = defineStore('formRow', () => {
             dataType: 'string',
             inputValue: '',
             convertedValue: '',
+            className: '',
         },
     ]
     const formRows = ref([
@@ -79,6 +82,7 @@ export const useFormRowStore = defineStore('formRow', () => {
     // ######################################
     //                getters
     // ######################################
+
     const getDeepCopy = computed(() => object => JSON.parse(JSON.stringify(object)))
     const formRowFieldsTemplate = getDeepCopy.value(formRowFields)
     const getFieldData = computed(() => formRows)
@@ -92,11 +96,12 @@ export const useFormRowStore = defineStore('formRow', () => {
     const getStyleFontSize = computed(() => id => getMatchingFormRow.value(id).fields[0].inputValue.max || 16)
     const getStyleData = computed(() => getSortedFormRows.value.map(formRow => formRow.fields.map(field => `${[field.name]}: ${convertStyleData(field.value,field.givenUnit,field.targetUnit,formRow.id) || ''}`)))
     const getCSS = computed(() => generateCSS())
-    const getTailwindConfigJs = computed(() => generateTailwindConfigJs())
+    const getTailwindConfigJs = computed(() => generateCustomTailwindClasses())
 
     // ######################################
     //                 actions
     // ######################################
+    
     function addFormRow() {
         formRowId.value++ 
         
@@ -110,11 +115,21 @@ export const useFormRowStore = defineStore('formRow', () => {
     }
     function handleInputData(property,value,id,key = 'inputValue') {
         // TODO: detect givenUnit
+        const matchingField = getMatchingField.value(property,id)
+
         if (property === 'color') {
             value = value.startsWith('#') ? value : `#${value}`
+            watchEffect(async () => {
+                try {
+                    const res = await fetch(`https://www.thecolorapi.com/id?hex=${value?.replace('#','')}`)
+                    const data = await res.json()
+                    matchingField.className = data?.name?.value.toLowerCase().replace(/[^\w]+/g,'-')
+                } catch (error) {
+                    console.log(error);
+                }
+            })
         }
 
-        const matchingField = getMatchingField.value(property,id)
         let givenUnit
 
         if (key === 'inputValue') {
@@ -194,10 +209,9 @@ export const useFormRowStore = defineStore('formRow', () => {
             }
         }
     }
-    function generateTailwindConfigJs() {
-        // TODO: generate color names for custom colors
-        let fieldName
-        let convertedValues = {}
+    function generateCustomTailwindClasses() {
+        let fieldName = ''
+        const convertedValues = {}
         let switchClassNames = false
         
         formRowFields.forEach(formRowField => {
@@ -205,19 +219,32 @@ export const useFormRowStore = defineStore('formRow', () => {
             convertedValues[fieldName] = {}
             let classIndex = 1
             
-            getSortedFormRows.value.forEach((sortedFormRow,index) => {
+            getSortedFormRows.value.forEach(sortedFormRow => {
                 let matchingField = sortedFormRow.fields.filter(field => field.name === formRowField.name)[0]
                 let convertedValue = matchingField.convertedValue 
                 let targetUnit = convertedValue ? matchingField.targetUnit : ''
+                let className = ''
 
                 if (sortedFormRow.baseStyle) {
                     switchClassNames = true
                     classIndex = 1
                 }
 
-                let className = `${switchClassNames ? 's' : 't'}${classIndex}`
+                switch (matchingField.name) {
+                    case 'font-weight':
+                        if (convertedValue === 0 || convertedValue > 1000) return 
+                        if (convertedValue % 100 === 0) return
+                        className = convertedValue
+                        break;
+                    case 'color':
+                        className = matchingField.className
+                        break;
+                    default:
+                        className = `${switchClassNames ? 's' : 't'}${classIndex}`
+                        break;
+                }
 
-                convertedValues[fieldName][className] = `${convertedValue}${targetUnit === 'clamp()' || targetUnit === 'num' ? '' : targetUnit || ''}`
+                if (convertedValue) convertedValues[fieldName][className] = `${convertedValue}${targetUnit === 'clamp()' || targetUnit === 'num' ? '' : targetUnit || ''}`
                 classIndex ++
             })
             
@@ -228,7 +255,39 @@ export const useFormRowStore = defineStore('formRow', () => {
     }
 
     function generateCSS() {
-        return 'hallo'
+        const generatedCSS = {}
+        generatedCSS['DEFAULT'] = {
+            css: {}
+        }
+        let selectorName = ''
+        let classIndex = 1
+
+        getSortedFormRows.value.forEach((sortedFormRow,index) => {
+            selectorName = sortedFormRow.baseStyle ? 'p' : `h${index + 1}`
+            generatedCSS['DEFAULT']['css'][selectorName] = {}
+
+            sortedFormRow.fields.forEach(field => {
+                let convertedValue = field.convertedValue 
+                let targetUnit = convertedValue ? field.targetUnit : ''
+
+                if (convertedValue) generatedCSS['DEFAULT']['css'][selectorName][field.name] = `${convertedValue}${targetUnit === 'clamp()' || targetUnit === 'num' ? '' : targetUnit || ''}`
+            })
+        })
+
+
+
+        // DEFAULT: {
+        //     css: {
+        //         h1: {
+        //             'font-size': '2rem',
+        //         },
+        //         p: {
+        //             'font-size': '2rem',
+        //         },
+        //     }
+        // }
+
+        return generatedCSS
     }
 
     function sortFormRows(a,b) {
