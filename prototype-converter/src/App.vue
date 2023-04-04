@@ -21,9 +21,9 @@
         <div class="flex justify-around">
           <pre class="text-black">
             <code>
-              {{ store.getFieldData }}
               {{ store.getCSS }}
-              {{ store.getStyleData }}
+              {{ store.getFieldData }}
+              <!-- {{ store.getStyleData }} -->
             </code>
           </pre>
           <pre class="text-black block whitespace-pre-wrap">
