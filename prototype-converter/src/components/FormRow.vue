@@ -15,7 +15,7 @@
 </script>
 
 <template>
-    <div class="flex py-20 gap-16">
+    <div class="flex py-20 gap-12">
         <div 
             class="flex items-center"
         >
