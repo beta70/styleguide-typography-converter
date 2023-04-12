@@ -22,12 +22,13 @@
           <pre class="text-black">
             <code>
               {{ store.getCSS }}
-              {{ store.getFieldData }}
+              {{ store.getSortedFormRows }}
               <!-- {{ store.getStyleData }} -->
             </code>
           </pre>
           <pre class="text-black block whitespace-pre-wrap">
             <code>
+              {{ store.getGeneratedStyleVariables }}
               {{ store.getTailwindConfigJs }}
             </code>
           </pre>
