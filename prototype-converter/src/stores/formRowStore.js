@@ -75,7 +75,8 @@ export const useFormRowStore = defineStore('formRow', () => {
         {
             id: formRowId.value,
             fields: formRowFields,
-            baseStyle: false
+            baseStyle: false,
+            generatedClasses: []
         }
     ])
 
@@ -96,7 +97,10 @@ export const useFormRowStore = defineStore('formRow', () => {
     const getStyleFontSize = computed(() => id => getMatchingFormRow.value(id).fields[0].inputValue.max || 16)
     const getStyleData = computed(() => getSortedFormRows.value.map(formRow => formRow.fields.map(field => `${[field.name]}: ${convertStyleData(field.value,field.givenUnit,field.targetUnit,formRow.id) || ''}`)))
     const getCSS = computed(() => generateCSS())
+    const getGeneratedStyleVariables = computed(() => generateStyleVariables())
     const getTailwindConfigJs = computed(() => generateCustomTailwindClasses())
+    const getTailwindClassPrefix = computed(() => property => generateTailwindClassPrefix(property))
+    const getTailwindFontWeightClass = computed(() => value => generateTailwindFontWeightClass(value))
 
     // ######################################
     //                 actions
@@ -107,7 +111,9 @@ export const useFormRowStore = defineStore('formRow', () => {
         
         formRows.value.push({
             id: formRowId.value,
-            fields: getDeepCopy.value(formRowFieldsTemplate)
+            fields: getDeepCopy.value(formRowFieldsTemplate),
+            baseStyle: false,
+            generatedClasses: []
         })
     }
     function deleteFormRow(id) {
@@ -212,55 +218,53 @@ export const useFormRowStore = defineStore('formRow', () => {
     function generateCustomTailwindClasses() {
         let fieldName = ''
         const convertedValues = {}
-        let switchClassNames = false
+        const convertedValuesSet = {}
         
-        formRowFields.forEach(formRowField => {
+        formRowFields.reduce((acc,formRowField) => {
             fieldName = formRowField.name.replace(/((?<=-)[a-z])/g, (match) => match.toUpperCase()).replace(/(?!\w)-/g,'')
             convertedValues[fieldName] = {}
+            convertedValuesSet[fieldName] = []
             let classIndex = 1
             
-            getSortedFormRows.value.forEach(sortedFormRow => {
+            getSortedFormRows.value.forEach((sortedFormRow,index) => {
                 let matchingField = sortedFormRow.fields.filter(field => field.name === formRowField.name)[0]
                 let convertedValue = matchingField.convertedValue 
                 let targetUnit = convertedValue ? matchingField.targetUnit : ''
                 let className = ''
 
-                if (sortedFormRow.baseStyle) {
-                    switchClassNames = true
-                    classIndex = 1
-                }
-
                 switch (matchingField.name) {
                     case 'font-weight':
                         if (convertedValue === 0 || convertedValue > 1000) return 
                         if (convertedValue % 100 === 0) return
-                        className = convertedValue
+                        className = `fw${convertedValue}`
                         break;
                     case 'color':
                         className = matchingField.className
                         break;
                     default:
-                        className = `${switchClassNames ? 's' : 't'}${classIndex}`
+                        let classNameAbbr = `${fieldName.match(/^[a-z]/g)}${fieldName.match(/((?<=\w)[A-Z])/g)}`
+                        className = `${classNameAbbr.toLowerCase()}${classIndex}`
                         break;
                 }
 
+                if (convertedValuesSet[fieldName].includes(convertedValue) && convertedValue !== '') return
                 if (convertedValue) convertedValues[fieldName][className] = `${convertedValue}${targetUnit === 'clamp()' || targetUnit === 'num' ? '' : targetUnit || ''}`
+                if (acc) convertedValuesSet[fieldName].push(convertedValue)
+
                 classIndex ++
             })
             
-            switchClassNames = false
-        })
+            return {}
+        }, {})
 
         return convertedValues
     }
-
     function generateCSS() {
         const generatedCSS = {}
         generatedCSS['DEFAULT'] = {
             css: {}
         }
         let selectorName = ''
-        let classIndex = 1
 
         getSortedFormRows.value.forEach((sortedFormRow,index) => {
             selectorName = sortedFormRow.baseStyle ? 'p' : `h${index + 1}`
@@ -274,25 +278,116 @@ export const useFormRowStore = defineStore('formRow', () => {
             })
         })
 
-
-
-        // DEFAULT: {
-        //     css: {
-        //         h1: {
-        //             'font-size': '2rem',
-        //         },
-        //         p: {
-        //             'font-size': '2rem',
-        //         },
-        //     }
-        // }
-
         return generatedCSS
     }
+    function generateStyleVariables() {
+        const generatedStyleVariables = {}
+        let switchClassNames = false
+        let classIndex = 1
 
+        getSortedFormRows.value.forEach(sortedFormRow => {
+            if (sortedFormRow.baseStyle) {
+                switchClassNames = true
+                classIndex = 1
+            }
+            
+            let variableName = `${switchClassNames === true ? 's' : 't'}${classIndex}`
+            generatedStyleVariables[variableName] = {}
+            let styleClasses = []
+
+            sortedFormRow.fields.forEach(field => {
+                let propertyName = field.name.replace(/((?<=-)[a-z])/g, (match) => match.toUpperCase()).replace(/(?!\w)-/g,'')
+                let styleValue = `${field.convertedValue}${field.targetUnit === 'clamp()' || field.targetUnit === 'num' ? '' : field.targetUnit || ''}`
+
+                if (field.name === 'font-weight' && !Object.values(getTailwindConfigJs.value['fontWeight']).length) styleClasses.push(`${getTailwindFontWeightClass.value(field.inputValue)}`) 
+
+                Object.entries(getTailwindConfigJs.value[propertyName]).forEach(entry => {
+                    const property = entry[0]
+                    const convertedValue = entry[1]
+                    if (convertedValue === styleValue) {
+                        styleClasses.push(`${getTailwindClassPrefix.value(property)}${property}`)
+                        return
+                    }
+
+                }) 
+            })
+            
+            generatedStyleVariables[variableName] = styleClasses.join(',').replaceAll(',',' ')
+            classIndex ++
+        })
+
+        return generatedStyleVariables
+    }
+    function generateTailwindClassPrefix(property) {
+        let propertyAbbr = property.substring(0,2)
+        let prefix = ''
+
+        switch (propertyAbbr) {
+            case 'fs':
+                prefix = 'text-'
+                break;
+            case 'lh':
+                prefix = 'leading-'
+                break;
+            case 'ls':
+                prefix = 'tracking-'
+                break;
+            case 'fw':
+                prefix = 'font-'
+                break;
+            default:
+                prefix = 'text-'
+                break;
+        }
+        
+        return prefix
+    }
+    function generateTailwindFontWeightClass(value) {
+        let className = ''
+
+        switch (value) {
+            case '100':
+                className = 'font-thin'
+                break;
+            case '200':
+                className = 'font-extralight'
+                break;
+            case '300':
+                className = 'font-light'
+                break;
+            case '400':
+                className = 'font-normal'
+                break;
+            case '500':
+                className = 'font-medium'
+                break;
+            case '600':
+                className = 'font-semibold'
+                break;
+            case '700':
+                className = 'font-bold'
+                break;
+            case '800':
+                className = 'font-extrabold'
+                break;
+            case '900':
+                className = 'font-black'
+                break;
+            default:
+                className = 'font-normal'
+                break;
+        }
+        
+        return className
+    }
     function sortFormRows(a,b) {
-        return b.fields[0].inputValue.max - a.fields[0].inputValue.max
+        const aFontSize = a.fields.filter(field => field.name === 'font-size')[0].inputValue.max 
+        const bFontSize = b.fields.filter(field => field.name === 'font-size')[0].inputValue.max 
+        const aFontWeight = a.fields.filter(field => field.name === 'font-weight')[0].inputValue
+        const bFontWeight = b.fields.filter(field => field.name === 'font-weight')[0].inputValue
+        
+        return aFontSize === bFontSize ? bFontWeight - aFontWeight : bFontSize - aFontSize
     }
 
-    return { formRowId, bodyFontSize, maxScreenWidth, formRows, getDeepCopy, getFieldData, getSortedFormRows, getStyleData, getCSS, getMatchingFormRow, getMatchingField, getNumberFromInput, getStyleFontSize, getTrimmedNumber, getTailwindConfigJs, addFormRow, deleteFormRow, handleInputData, handleFontSizeInput, setBaseStyle, handleGlobalStyleInput, convertStyleData, setConvertedValues, generateCSS }
+    return { formRowId, bodyFontSize, maxScreenWidth, formRows, getDeepCopy, getFieldData, getSortedFormRows, getStyleData, getCSS, getGeneratedStyleVariables, getMatchingFormRow, getMatchingField, getNumberFromInput, getStyleFontSize, getTrimmedNumber, getTailwindConfigJs, addFormRow, deleteFormRow, handleInputData, handleFontSizeInput, setBaseStyle, handleGlobalStyleInput, convertStyleData, setConvertedValues, generateCSS, generateStyleVariables }
 })
