@@ -21,8 +21,8 @@ export const useFormRowStore = defineStore('formRow', () => {
             conversionOptions: ['rem','vw','clamp()'],
             range: true,
             baseFontSize: false,
-            targetUnit: 'rem',
             givenUnit: '',
+            targetUnit: 'rem',
             inputValue: {
                 min: '',
                 max: '',
@@ -36,8 +36,8 @@ export const useFormRowStore = defineStore('formRow', () => {
             placeholder: '24px',
             allowedUnits: ['px','rem','em','num'],
             conversionOptions: ['num','rem'],
-            targetUnit: 'num',
             givenUnit: '',
+            targetUnit: 'num',
             inputValue: '',
             convertedValue: '',
         },
@@ -48,8 +48,8 @@ export const useFormRowStore = defineStore('formRow', () => {
             placeholder: '1px',
             allowedUnits: ['px','rem','em'],
             conversionOptions: ['em','rem'],
-            targetUnit: 'em',
             givenUnit: '',
+            targetUnit: 'em',
             inputValue: '',
             convertedValue: '',
         },
@@ -65,6 +65,26 @@ export const useFormRowStore = defineStore('formRow', () => {
             name: 'color',
             fieldType: 'input',
             placeholder: '#ACACAC',
+            dataType: 'string',
+            inputValue: '',
+            convertedValue: '',
+            className: '',
+        },
+        { 
+            name: 'text-transform',
+            fieldType: 'input',
+            placeholder: 'uppercase',
+            allowedUnits: ['uppercase','lowercase','capitalize'],
+            dataType: 'string',
+            inputValue: '',
+            convertedValue: '',
+            className: '',
+        },
+        { 
+            name: 'text-decoration',
+            fieldType: 'input',
+            placeholder: 'underline',
+            allowedUnits: ['underline','overline','line-through'],
             dataType: 'string',
             inputValue: '',
             convertedValue: '',
@@ -122,6 +142,7 @@ export const useFormRowStore = defineStore('formRow', () => {
     function handleInputData(property,value,id,key = 'inputValue') {
         // TODO: detect givenUnit
         const matchingField = getMatchingField.value(property,id)
+        let givenUnit
 
         if (property === 'color') {
             value = value.startsWith('#') ? value : `#${value}`
@@ -136,9 +157,13 @@ export const useFormRowStore = defineStore('formRow', () => {
             })
         }
 
-        let givenUnit
-
         if (key === 'inputValue') {
+            if (property === 'text-transform' || property === 'text-decoration') {
+                if (!matchingField.allowedUnits.includes(value)) {
+                    value = ''
+                }
+            }
+
             givenUnit = value.match(/\D/g)?.join('')?.trim()
             givenUnit = matchingField?.allowedUnits?.includes(givenUnit) ? givenUnit : matchingField?.allowedUnits?.[0]
             matchingField['givenUnit'] = givenUnit
@@ -221,6 +246,8 @@ export const useFormRowStore = defineStore('formRow', () => {
         const convertedValuesSet = {}
         
         formRowFields.reduce((acc,formRowField) => {
+            if (formRowField.name === 'text-transform' || formRowField.name === 'text-decoration') return
+
             fieldName = formRowField.name.replace(/((?<=-)[a-z])/g, (match) => match.toUpperCase()).replace(/(?!\w)-/g,'')
             convertedValues[fieldName] = {}
             convertedValuesSet[fieldName] = []
@@ -228,9 +255,11 @@ export const useFormRowStore = defineStore('formRow', () => {
             
             getSortedFormRows.value.forEach((sortedFormRow,index) => {
                 let matchingField = sortedFormRow.fields.filter(field => field.name === formRowField.name)[0]
-                let convertedValue = matchingField.convertedValue 
+                let convertedValue = matchingField.convertedValue
                 let targetUnit = convertedValue ? matchingField.targetUnit : ''
                 let className = ''
+
+                if (!convertedValue) return 
 
                 switch (matchingField.name) {
                     case 'font-weight':
@@ -300,6 +329,11 @@ export const useFormRowStore = defineStore('formRow', () => {
                 let styleValue = `${field.convertedValue}${field.targetUnit === 'clamp()' || field.targetUnit === 'num' ? '' : field.targetUnit || ''}`
 
                 if (field.name === 'font-weight' && !Object.values(getTailwindConfigJs.value['fontWeight']).length) styleClasses.push(`${getTailwindFontWeightClass.value(field.inputValue)}`) 
+                if (field.name === 'text-transform' || field.name === 'text-decoration') {
+                    if (field.inputValue) styleClasses.push(field.inputValue)
+                    return
+                }
+
 
                 Object.entries(getTailwindConfigJs.value[propertyName]).forEach(entry => {
                     const property = entry[0]
@@ -383,10 +417,18 @@ export const useFormRowStore = defineStore('formRow', () => {
     function sortFormRows(a,b) {
         const aFontSize = a.fields.filter(field => field.name === 'font-size')[0].inputValue.max 
         const bFontSize = b.fields.filter(field => field.name === 'font-size')[0].inputValue.max 
-        const aFontWeight = a.fields.filter(field => field.name === 'font-weight')[0].inputValue
-        const bFontWeight = b.fields.filter(field => field.name === 'font-weight')[0].inputValue
-        
-        return aFontSize === bFontSize ? bFontWeight - aFontWeight : bFontSize - aFontSize
+        const aFontWeight = a.fields.filter(field => field.name === 'font-weight')[0].inputValue || '400'
+        const bFontWeight = b.fields.filter(field => field.name === 'font-weight')[0].inputValue || '400'
+        const aLineHeight = a.fields.filter(field => field.name === 'line-height')[0].inputValue
+        const bLineHeight = b.fields.filter(field => field.name === 'line-height')[0].inputValue
+
+        if (aFontSize === bFontSize) {
+            if (bFontWeight === aFontWeight) {
+                return bLineHeight - aLineHeight
+            }
+            return bFontWeight - aFontWeight 
+        } 
+        return bFontSize - aFontSize 
     }
 
     return { formRowId, bodyFontSize, maxScreenWidth, formRows, getDeepCopy, getFieldData, getSortedFormRows, getStyleData, getCSS, getGeneratedStyleVariables, getMatchingFormRow, getMatchingField, getNumberFromInput, getStyleFontSize, getTrimmedNumber, getTailwindConfigJs, addFormRow, deleteFormRow, handleInputData, handleFontSizeInput, setBaseStyle, handleGlobalStyleInput, convertStyleData, setConvertedValues, generateCSS, generateStyleVariables }
