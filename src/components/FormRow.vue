@@ -10,45 +10,42 @@
         fields: Object,
         formRowId: Number,
         index: Number,
+        title: String,
     })
 
 </script>
 
 <template>
-    <div class="flex py-20 gap-12">
-        <div 
-            class="flex items-center"
-        >
-            <input 
-                :id="formRowId" 
-                name="base font-size" 
-                type="radio" 
-                @change="store.setBaseStyle(formRowId)"
-                class="h-4 w-4 border-gray-300 text-stone-600 focus:ring-white-600"
-            >
-            <label 
-                :for="formRowId" 
-                class="ml-3 block text-xs tracking-wider text-white uppercase"
-            >
-                base
-            </label>
+    <div class="flex flex-col w-full">
+        <div class="flex items-center gap-12 mb-20">
+            <div class="flex items-center gap-4 mt-2">
+                <input 
+                    :id="formRowId" 
+                    name="base font-size" 
+                    type="radio" 
+                    @change="store.setBaseStyle(formRowId)"
+                    class="w-6 h-6 border-gray-300 focus:ring-white-600 bg-darker-blue"
+                >
+                <label 
+                    :for="formRowId" 
+                    class="block font-semibold tracking-wider text-white text-md"
+                >
+                    main text font-size 
+                </label>
+            </div>
         </div>
-        <div
-            v-for="field in fields" 
-            :key="field"
-        >
-            <CustomInput 
-                v-if="field.fieldType === 'input'"
-                :formRowId="formRowId" 
-                :field="field"
-            />
+        <div class="grid w-full gap-x-12 gap-y-20 grid-auto-fit">
+            <div
+                v-for="field in fields" 
+                :key="field"
+            >
+                <CustomInput 
+                    v-if="field.fieldType === 'input'"
+                    :formRowId="formRowId" 
+                    :field="field"
+                />
+            </div>
         </div>
-        <button 
-            @click="store.deleteFormRow(formRowId)"
-            type="button" 
-            class="material-icons self-center text-rose-700 text-5xl font-medium hover:text-rose-600 transition-all duration-300"
-        >
-        cancel
-        </button>
-    </div>
+        </div>
 </template>
+

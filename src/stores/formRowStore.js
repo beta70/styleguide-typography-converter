@@ -96,6 +96,7 @@ export const useFormRowStore = defineStore('formRow', () => {
             id: formRowId.value,
             fields: formRowFields,
             baseStyle: false,
+            active: true,
             generatedClasses: []
         }
     ])
@@ -133,12 +134,29 @@ export const useFormRowStore = defineStore('formRow', () => {
             id: formRowId.value,
             fields: getDeepCopy.value(formRowFieldsTemplate),
             baseStyle: false,
-            generatedClasses: []
+            generatedClasses: [],
+            active: false
         })
+
+        this.showActiveFormRow(formRowId.value)
     }
+    
     function deleteFormRow(id) {
         formRows.value = formRows?.value?.filter(formRow => formRow.id !== id)
     }
+
+    function copyCode(code) {
+        console.log('clicked', code);
+        navigator.clipboard.writeText(JSON.stringify(code, null, 2))
+    }
+
+    function showActiveFormRow(id) {
+        getMatchingFormRow.value(id).active = true
+        formRows.value
+            .filter(formRow => formRow !== getMatchingFormRow.value(id))
+            .forEach(formRow => formRow.active = false)
+    }
+
     function handleInputData(property,value,id,key = 'inputValue') {
         // TODO: detect givenUnit
         const matchingField = getMatchingField.value(property,id)
@@ -186,19 +204,23 @@ export const useFormRowStore = defineStore('formRow', () => {
         matchingField[key] = value
         setConvertedValues()
     }
+
     function handleFontSizeInput(range,property,value,id) {
         handleInputData(property,value,id,range)
     }
+
     function setBaseStyle(id) {
         getMatchingFormRow.value(id).baseStyle = true
         formRows.value
             .filter(formRow => formRow.id !== id)
             .forEach(formRow => formRow.baseStyle = false)
     }
+
     function handleGlobalStyleInput(property,value) {
         if (this.hasOwnProperty(property)) this[property] = value
         setConvertedValues()
     }
+
     function setConvertedValues() {
         formRows.value.forEach(formRow => {
             formRow.fields.forEach(field => {
@@ -206,6 +228,7 @@ export const useFormRowStore = defineStore('formRow', () => {
             })
         })
     } 
+
     function convertStyleData(field,id) {
         if(!field) return 
 
@@ -240,8 +263,10 @@ export const useFormRowStore = defineStore('formRow', () => {
             }
         }
     }
+
     function generateCustomTailwindClasses() {
         let fieldName = ''
+        const configObject = { 'theme': { 'extend': {} } }
         const convertedValues = {}
         const convertedValuesSet = {}
         
@@ -286,29 +311,32 @@ export const useFormRowStore = defineStore('formRow', () => {
             return {}
         }, {})
 
-        return convertedValues
+        configObject.theme.extend = convertedValues  
+        return configObject
     }
+
     function generateCSS() {
-        const generatedCSS = {}
-        generatedCSS['DEFAULT'] = {
+        const generatedCSS = { 'typography': {} }
+        generatedCSS.typography['DEFAULT'] = {
             css: {}
         }
         let selectorName = ''
 
         getSortedFormRows.value.forEach((sortedFormRow,index) => {
             selectorName = sortedFormRow.baseStyle ? 'p' : `h${index + 1}`
-            generatedCSS['DEFAULT']['css'][selectorName] = {}
+            generatedCSS.typography['DEFAULT']['css'][selectorName] = {}
 
             sortedFormRow.fields.forEach(field => {
                 let convertedValue = field.convertedValue 
                 let targetUnit = convertedValue ? field.targetUnit : ''
 
-                if (convertedValue) generatedCSS['DEFAULT']['css'][selectorName][field.name] = `${convertedValue}${targetUnit === 'clamp()' || targetUnit === 'num' ? '' : targetUnit || ''}`
+                if (convertedValue) generatedCSS.typography['DEFAULT']['css'][selectorName][field.name] = `${convertedValue}${targetUnit === 'clamp()' || targetUnit === 'num' ? '' : targetUnit || ''}`
             })
         })
 
         return generatedCSS
     }
+
     function generateStyleVariables() {
         const generatedStyleVariables = {}
         let switchClassNames = false
@@ -322,20 +350,22 @@ export const useFormRowStore = defineStore('formRow', () => {
             
             let variableName = `${switchClassNames === true ? 's' : 't'}${classIndex}`
             generatedStyleVariables[variableName] = {}
+            getMatchingFormRow.value(sortedFormRow.id).indexTitle = variableName
             let styleClasses = []
 
             sortedFormRow.fields.forEach(field => {
                 let propertyName = field.name.replace(/((?<=-)[a-z])/g, (match) => match.toUpperCase()).replace(/(?!\w)-/g,'')
                 let styleValue = `${field.convertedValue}${field.targetUnit === 'clamp()' || field.targetUnit === 'num' ? '' : field.targetUnit || ''}`
 
-                if (field.name === 'font-weight' && !Object.values(getTailwindConfigJs.value['fontWeight']).length) styleClasses.push(`${getTailwindFontWeightClass.value(field.inputValue)}`) 
+                if (!getTailwindConfigJs.value.theme.extend.hasOwnProperty(propertyName) || (propertyName === 'fontSize' && !Object.keys(getTailwindConfigJs.value.theme.extend.fontSize).length)) return
+
+                if (field.name === 'font-weight' && !Object.values(getTailwindConfigJs.value.theme.extend['fontWeight']).length) styleClasses.push(`${getTailwindFontWeightClass.value(field.inputValue)}`) 
                 if (field.name === 'text-transform' || field.name === 'text-decoration') {
                     if (field.inputValue) styleClasses.push(field.inputValue)
                     return
                 }
 
-
-                Object.entries(getTailwindConfigJs.value[propertyName]).forEach(entry => {
+                Object.entries(getTailwindConfigJs.value.theme.extend[propertyName]).forEach(entry => {
                     const property = entry[0]
                     const convertedValue = entry[1]
                     if (convertedValue === styleValue) {
@@ -431,5 +461,34 @@ export const useFormRowStore = defineStore('formRow', () => {
         return bFontSize - aFontSize 
     }
 
-    return { formRowId, bodyFontSize, maxScreenWidth, formRows, getDeepCopy, getFieldData, getSortedFormRows, getStyleData, getCSS, getGeneratedStyleVariables, getMatchingFormRow, getMatchingField, getNumberFromInput, getStyleFontSize, getTrimmedNumber, getTailwindConfigJs, addFormRow, deleteFormRow, handleInputData, handleFontSizeInput, setBaseStyle, handleGlobalStyleInput, convertStyleData, setConvertedValues, generateCSS, generateStyleVariables }
+    return { 
+        formRowId, 
+        bodyFontSize, 
+        maxScreenWidth, 
+        formRows, 
+        getDeepCopy, 
+        copyCode,
+        getFieldData, 
+        getSortedFormRows, 
+        getStyleData, 
+        getCSS, 
+        getGeneratedStyleVariables, 
+        getMatchingFormRow, 
+        getMatchingField, 
+        getNumberFromInput, 
+        getStyleFontSize, 
+        getTrimmedNumber, 
+        getTailwindConfigJs, 
+        addFormRow, 
+        showActiveFormRow, 
+        deleteFormRow, 
+        handleInputData, 
+        handleFontSizeInput, 
+        setBaseStyle, 
+        handleGlobalStyleInput, 
+        convertStyleData, 
+        setConvertedValues, 
+        generateCSS, 
+        generateStyleVariables 
+    }
 })

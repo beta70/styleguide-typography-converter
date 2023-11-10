@@ -27,7 +27,7 @@
 <template>
     <TabGroup>
         <TabList
-            :class="[field.conversionOptions.length === 2 ? 'grid-cols-2' : 'grid-cols-3', 'grid justify-items-start']"
+            class="flex"
         >
             <Tab
                 v-for="option in field.conversionOptions" 
@@ -35,11 +35,14 @@
                 :value="option" 
                 v-slot="{ selected }"
                 as="button"
-                class="col-span-1 w-full"
+                class="min-w-[5rem] col-span-1"
                 @click="handleOptionToggle(option)"
             >
                 <div
-                    :class="[selected ? 'bg-white text-stone-800' : 'bg-stone-700 text-white', 'uppercase tracking-wider text-xs w-full p-3 transition duration-200'] "
+                    :class="[
+                        selected ? 'bg-dark-blue text-white' : 'bg-purple', 
+                        'text-xs w-full p-3 transition duration-200'
+                    ] "
                 >
                     {{ option }}
                 </div>

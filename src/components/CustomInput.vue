@@ -27,9 +27,9 @@
 </script>
 
 <template>
-    <div class="flex flex-col gap-16 h-full">
-        <div class="flex flex-col justify-between gap-4 h-full">
-            <label class="block text-sm tracking-wider text-white">{{ field.name }}</label>
+    <div class="flex flex-col h-full gap-16">
+        <div class="flex flex-col justify-between h-full gap-3 between">
+            <label class="block font-semibold tracking-wider text-white text-md">{{ field.name }}</label>
             <CustomTabs 
                 v-if="field.conversionOptions"
                 :field="field"
@@ -38,7 +38,7 @@
             />
             <div
                 v-if="field.name === 'color'"
-                class="w-full h-full"
+                class="w-full h-10"
                 :style="{ 'background': inputTextColor }"
             >
             </div>
@@ -47,34 +47,34 @@
                 class="flex gap-4"
             >
                 <div 
-                    class="flex flex-col relative"
-                    :class="[showFontSizeRange ? 'visible order-1' : 'invisible order-2']"
-                    >
+                    class="relative flex flex-col"
+                    :class="[showFontSizeRange ? 'block order-1' : 'hidden order-2']"
+                >
                     <input 
-                    :placeholder="field.placeholder" 
-                    @change="store.handleInputData(field.name,value,formRowId,'min')"
-                    v-model="value"
-                    class="block w-full py-3 bg-transparent border-white border-b text-gray-200 sm:text-xl font-thin placeholder-gray-200/50 focus:outline-none" 
+                        :placeholder="field.placeholder" 
+                        @change="store.handleInputData(field.name,value,formRowId,'min')"
+                        v-model="value"
+                        class="block w-full py-3 font-thin text-white bg-transparent border-b border-white sm:text-xl placeholder-gray-200/50 focus:outline-none" 
                     />
                     <label 
-                    class="block absolute -bottom-6 text-xs tracking-wider text-white uppercase mt-2"
-                    :class="[showFontSizeRange ? 'visible order-2' : 'invisible order-1']"
+                        class="absolute block mt-2 text-xs tracking-wider text-white uppercase -bottom-6"
+                        :class="[showFontSizeRange ? 'visible order-2' : 'invisible order-1']"
                     >
-                    min 
-                </label>
+                        min 
+                    </label>
                 </div>
                 <div 
-                    class="flex flex-col relative"
+                    class="relative flex flex-col"
                     :class="[showFontSizeRange ? 'order-2' : 'order-1']"
                 >
                     <input 
-                    :placeholder="field.placeholder" 
-                    @change="store.handleInputData(field.name,value,formRowId,'max')"
-                    v-model="value"
-                    class="block w-full py-3 bg-transparent border-white border-b text-gray-200 sm:text-xl font-thin placeholder-gray-200/50 focus:outline-none" 
+                        :placeholder="field.placeholder" 
+                        @change="store.handleInputData(field.name,value,formRowId,'max')"
+                        v-model="value"
+                        class="block w-full py-3 font-thin text-gray-200 bg-transparent border-b border-white sm:text-xl placeholder-gray-200/50 focus:outline-none" 
                     />
                     <label 
-                        class="absolute -bottom-6 text-xs tracking-wider text-white uppercase mt-2"
+                        class="absolute mt-2 text-xs tracking-wider text-white uppercase -bottom-6"
                         :class="[showFontSizeRange ? 'visible order-2' : 'invisible order-1']"
                     >
                         max
@@ -86,7 +86,7 @@
                 :placeholder="field.placeholder" 
                 v-model="value"
                 @change="store.handleInputData(field.name,value,formRowId); setTextColor(field.name,value)"
-                class="block w-full py-3 bg-transparent border-white border-b text-gray-200 sm:text-xl font-thin placeholder-gray-200/50 focus:outline-none" 
+                class="block w-full py-3 font-thin text-gray-200 bg-transparent border-b border-white sm:text-xl placeholder-gray-200/50 focus:outline-none" 
             />
         </div>
     </div>

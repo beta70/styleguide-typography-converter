@@ -2,7 +2,7 @@
 
   import Form from './components/Form.vue'
   import Tabs from './components/Tabs.vue'
-  import { computed,ref } from 'vue'
+  import { computed,ref,onMounted } from 'vue'
   import { useFormRowStore } from './stores/formRowStore'
 
   const store = useFormRowStore()
@@ -10,7 +10,7 @@
 </script>
 
 <template>
-  <div>
+  <div class="bg-black font-noto">
       <Form 
         v-bind:form-rows="formRows" 
         :formRowId="store.formRowId" 
@@ -18,20 +18,14 @@
         :max-screen-width="maxScreenWidth"
 
         />
-        <div class="flex justify-around">
-          <pre class="text-black">
-            <code>
-              {{ store.getCSS }}
-              {{ store.getSortedFormRows }}
-              <!-- {{ store.getStyleData }} -->
-            </code>
-          </pre>
-          <pre class="text-black block whitespace-pre-wrap">
-            <code>
-              {{ store.getGeneratedStyleVariables }}
-              {{ store.getTailwindConfigJs }}
-            </code>
-          </pre>
-        </div>
+        
   </div>
 </template>
+
+<style>
+
+    .grid-auto-fit {
+        grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
+    }
+
+</style>
