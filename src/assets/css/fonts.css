@@ -1,4 +1,28 @@
 @font-face {
+    font-family: 'MartianMono';
+    src: url('../src/assets/fonts/MartianMono-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'SourceCode';
+    src: url('../src/assets/fonts/MartianMono-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'SourceCode';
+    src: url('../src/assets/fonts/MartianMono-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'SourceCode';
+    src: url('../src/assets/fonts/MartianMono-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+@font-face {
     font-family: 'SourceCode';
     src: url('../src/assets/fonts/SourceCodePro-Light.ttf') format('truetype');
     font-weight: 300;

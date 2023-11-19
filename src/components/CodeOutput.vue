@@ -29,17 +29,17 @@
 
 <template>
     <div>
-        <h3 class="block font-semibold tracking-wider text-white text-md">{{ props.heading }}</h3>
+        <h3 class="block mb-6 text-xs font-normal tracking-wide text-ttt-perlwinkle bg-darker-blue">{{ props.heading }}</h3>
         <button 
-            class="relative w-full group"
+            class="relative w-full bg-black shadow-lg shadow-black group"
             @click="store.copyCode(props.code)"
         >
         <div 
             :id="props.id"
-            class="flex justify-around w-full mb-4 text-left cursor-pointer group"
+            class="flex justify-around w-full m-4 text-left cursor-pointer group"
         >
         </div>
-        <div class="absolute flex items-center gap-4 top-8 right-8 2xl:right-1/3 group-hover:opacity-100">
+        <div class="absolute flex items-center gap-4 top-8 right-8 group-hover:opacity-100">
             <span class="block tracking-wider text-gray-200/50 text-md">{{ props.lang }}</span>
             <img 
                 src="../assets/images/copy.svg" 

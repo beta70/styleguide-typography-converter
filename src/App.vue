@@ -10,7 +10,7 @@
 </script>
 
 <template>
-  <div class="bg-darker-blue font-noto">
+  <div class="bg-darker-blue font-martian">
       <Form 
         v-bind:form-rows="formRows" 
         :formRowId="store.formRowId" 

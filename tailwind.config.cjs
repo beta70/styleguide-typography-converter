@@ -7,6 +7,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
+        'martian': ['MartianMono','ui-sans-serif', 'system-ui'],
         'source-code': ['SourceCode','ui-sans-serif', 'system-ui'],
         'noto': ['NotoSans','ui-sans-serif', 'system-ui']
       },
@@ -15,14 +16,12 @@ module.exports = {
         'darker-blue': '#12141C',
         'dark-blue': '#171923',
         'papaya': '#FDF0D5',
-        'pink': '#D81E5B',
-        'blue': '#197278',
-        'purple': '#8E7DBE',
-        'light-blue': '#89DDFF',
-        'light-violet': '#8E8DBE',
-        'light-lime': '#96F550',
-        'light-green': '#C3E88D',
-        'light-red': '#F07178',
+        'ttt-murrey': '#87255B',
+        'ttt-violet': '#B370B0',
+        'ttt-lilac': '#BBA0CA',
+        'ttt-thistle': '#D1C8E1',
+        'ttt-perlwinkle': '#C3C3E6',
+        'ttt-gray': '#95A3B3',
       },
       maxWidth: {
         '8xl': '1536px',
