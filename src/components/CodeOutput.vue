@@ -7,8 +7,6 @@
     const props = defineProps(['code','id','heading', 'lang'])
     const codeOutput = ref('')
 
-    console.log(props);
-
     watchPostEffect(async () => {
         if (props.code) {
             try {

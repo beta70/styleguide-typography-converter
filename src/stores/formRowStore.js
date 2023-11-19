@@ -177,16 +177,21 @@ export const useFormRowStore = defineStore('formRow', () => {
 
         if (key === 'inputValue') {
             if (property === 'text-transform' || property === 'text-decoration') {
+
                 if (!matchingField.allowedUnits.includes(value)) {
                     value = ''
                 }
+
+                givenUnit = undefined
+            } else {
+                givenUnit = value.match(/\D/g)?.join('')?.trim()
+                givenUnit = matchingField?.allowedUnits?.includes(givenUnit) ? givenUnit : matchingField?.allowedUnits?.[0]
+                matchingField['givenUnit'] = givenUnit
             }
 
-            givenUnit = value.match(/\D/g)?.join('')?.trim()
-            givenUnit = matchingField?.allowedUnits?.includes(givenUnit) ? givenUnit : matchingField?.allowedUnits?.[0]
-            matchingField['givenUnit'] = givenUnit
             value = matchingField.dataType === 'string' ? value : getNumberFromInput.value(value)
             matchingField[key] = value
+
             setConvertedValues()
             return
         }
@@ -197,6 +202,7 @@ export const useFormRowStore = defineStore('formRow', () => {
             matchingField['givenUnit'] = givenUnit
             value = matchingField.dataType === 'string' ? value : getNumberFromInput.value(value)
             matchingField['inputValue'][key] = value
+
             setConvertedValues()
             return
         }
@@ -241,6 +247,7 @@ export const useFormRowStore = defineStore('formRow', () => {
             return 
         }
         
+
         if (field.givenUnit === 'px') {
             if (typeof field.inputValue === 'object') {
                 minFontSize = field.inputValue.min
@@ -321,9 +328,18 @@ export const useFormRowStore = defineStore('formRow', () => {
             css: {}
         }
         let selectorName = ''
+        let switchClassNames = false
 
         getSortedFormRows.value.forEach((sortedFormRow,index) => {
-            selectorName = sortedFormRow.baseStyle ? 'p' : `h${index + 1}`
+            if (switchClassNames) return
+
+            if (sortedFormRow.baseStyle) {
+                switchClassNames = true
+            }
+
+            if  ((index > 5 && !switchClassNames)) return
+
+            selectorName = switchClassNames === true ? 'p' : `h${index + 1}`
             generatedCSS.typography['DEFAULT']['css'][selectorName] = {}
 
             sortedFormRow.fields.forEach(field => {
@@ -347,6 +363,8 @@ export const useFormRowStore = defineStore('formRow', () => {
                 switchClassNames = true
                 classIndex = 1
             }
+
+            console.log(sortedFormRow);
             
             let variableName = `${switchClassNames === true ? 's' : 't'}${classIndex}`
             generatedStyleVariables[variableName] = {}
@@ -354,16 +372,19 @@ export const useFormRowStore = defineStore('formRow', () => {
             let styleClasses = []
 
             sortedFormRow.fields.forEach(field => {
+                console.log('field: ',field);
                 let propertyName = field.name.replace(/((?<=-)[a-z])/g, (match) => match.toUpperCase()).replace(/(?!\w)-/g,'')
                 let styleValue = `${field.convertedValue}${field.targetUnit === 'clamp()' || field.targetUnit === 'num' ? '' : field.targetUnit || ''}`
+
+                if (field.name === 'text-transform' || field.name === 'text-decoration') {
+                    console.log('here');
+                    if (field.inputValue) styleClasses.push(field.inputValue)
+                    return
+                }
 
                 if (!getTailwindConfigJs.value.theme.extend.hasOwnProperty(propertyName) || (propertyName === 'fontSize' && !Object.keys(getTailwindConfigJs.value.theme.extend.fontSize).length)) return
 
                 if (field.name === 'font-weight' && !Object.values(getTailwindConfigJs.value.theme.extend['fontWeight']).length) styleClasses.push(`${getTailwindFontWeightClass.value(field.inputValue)}`) 
-                if (field.name === 'text-transform' || field.name === 'text-decoration') {
-                    if (field.inputValue) styleClasses.push(field.inputValue)
-                    return
-                }
 
                 Object.entries(getTailwindConfigJs.value.theme.extend[propertyName]).forEach(entry => {
                     const property = entry[0]

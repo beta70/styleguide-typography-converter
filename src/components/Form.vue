@@ -16,13 +16,13 @@
 </script>
 
 <template>
-    <div class="flex flex-col mx-auto max-w-9xl">
+    <div class="flex flex-col gap-20 p-20 mx-auto max-w-9xl">
         <div class="grid grid-cols-12">
-            <div class="flex flex-col col-span-12 gap-2 p-20 xl:col-span-3">
-                <h2 class="mb-20 text-3xl font-bold text-white ">Document styles</h2>
-            </div>
-            <div class="col-span-9 p-20">
-                <div class="p-12  rounded-lg shadow-[12px_12px_0px_0px_#C3E88D] bg-black-blue mb-8">
+            <div class="col-span-12">
+                <div class="relative p-12 transition-all duration-300 border rounded-lg border-papaya form__panel">
+                    <div class="absolute top-0 z-10 px-2 -translate-y-1/2 left-8 bg-darker-blue">
+                        <h2 class="text-lg font-bold text-white lowercase">Document styles</h2>
+                    </div>
                     <div class="flex justify-start w-full gap-16">
                         <div class="flex flex-col h-full gap-16">
                             <label class="block font-semibold tracking-wider text-white text-md">body font-size</label>
@@ -30,7 +30,7 @@
                                 :placeholder="'16px'" 
                                 @change="store.handleGlobalStyleInput('bodyFontSize',value)"
                                 v-model="value"
-                                class="block w-full py-3 font-thin bg-transparent border-b border-white sm:text-xl placeholder-gray-200/50 focus:outline-none" 
+                                class="block w-full py-3 font-thin text-white bg-transparent border-b border-white sm:text-xl placeholder-gray-200/50 focus:outline-none" 
                             />
                         </div>
                         <div class="flex flex-col h-full gap-16">
@@ -39,7 +39,7 @@
                                 :placeholder="'1920px'" 
                                 @change="store.handleGlobalStyleInput('maxScreenWidth',value)"
                                 v-model="value"
-                                class="block w-full py-3 font-thin bg-transparent border-b border-white sm:text-xl placeholder-gray-200/50 focus:outline-none" 
+                                class="block w-full py-3 font-thin text-white bg-transparent border-b border-white sm:text-xl placeholder-gray-200/50 focus:outline-none" 
                             />
                         </div>
                     </div>
@@ -47,54 +47,68 @@
             </div>
         </div>
         <div class="grid grid-cols-12">
-            <div class="flex flex-col items-start col-span-12 gap-2 p-20 xl:col-span-3">
-                <h2 class="mb-20 text-3xl font-bold text-white ">Typographic styles</h2>
-                <div
-                    v-for="(formRow,index) in store.getSortedFormRows"
-                    :key="formRow"
-                    v-bind:fields="formRow.fields"
-                    v-bind:formRowId="formRow.id"
-                    :index="index"
-                    @delete-form-row="(id) => $emit('deleteFormRow',id)"
-                    class="flex items-center gap-8"
-                >
-                    <button
-                        @click="store.showActiveFormRow(formRow.id)"
-                        :class="[
-                            'block text-lg tracking-wider',
-                            formRow.active ? 'text-white' : 'text-stone-200/50'
-                        ]"
+            <div class="flex flex-col items-start col-span-12 gap-20 xl:col-span-3">
+                <div class="relative w-full p-12 transition-all duration-300 border rounded-lg border-purple form__panel">
+
+                    <div class="absolute top-0 z-10 px-2 -translate-y-1/2 left-8 bg-darker-blue">
+                        <h2 class="text-lg font-bold text-white lowercase">typographic styles</h2>
+                    </div>
+                    <div
+                        v-for="(formRow,index) in store.getSortedFormRows"
+                        :key="formRow"
+                        v-bind:fields="formRow.fields"
+                        v-bind:formRowId="formRow.id"
+                        :index="index"
+                        @delete-form-row="(id) => $emit('deleteFormRow',id)"
+                        class="flex items-center gap-12"
                     >
-                        Style {{ formRow.indexTitle }}
-                    </button>
+                        <button
+                            @click="store.showActiveFormRow(formRow.id)"
+                            :class="[
+                                'text-lg tracking-wider flex gap-2 items-center relative',
+                                formRow.active ? 'text-white' : 'text-stone-200/50'
+                            ]"
+                        >
+                            <div 
+                                v-if="formRow.baseStyle"
+                                :class="[formRow.active ? 'text-white' : 'text-stone-200/50', 'w-5 absolute -left-8']"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z" fill="currentColor"/></svg>
+                            </div>
+                            Style {{ formRow.indexTitle }}
+                        </button>
+                        <button 
+                            @click="store.deleteFormRow(formRow.id)"
+                            type="button" 
+                            class="flex items-center"
+                            v-if="formRow.active"
+                        >
+                            <img 
+                                src="../assets/images/close.svg" 
+                                alt=""
+                                class="w-4"
+                            >
+                        </button>
+                    </div>
                     <button 
-                        @click="store.deleteFormRow(formRow.id)"
+                        @click="store.addFormRow()"
                         type="button" 
-                        class="flex items-center"
-                        v-if="formRow.active"
+                        class="flex items-center justify-between gap-4 px-4 py-2 mt-8 text-lg font-medium text-black transition-all duration-300 bg-light-green"
                     >
+                        <span>add style</span>
                         <img 
-                            src="../assets/images/close.svg" 
+                            src="../assets/images/add.svg" 
                             alt=""
-                            class="w-4"
+                            class="w-4 h-4"
                         >
                     </button>
                 </div>
-                <button 
-                    @click="store.addFormRow()"
-                    type="button" 
-                    class="flex items-center justify-between gap-4 px-4 py-2 mt-8 text-lg font-medium text-black transition-all duration-300 rounded-xl bg-light-green"
-                >
-                    <span>add style</span>
-                    <img 
-                        src="../assets/images/add.svg" 
-                        alt=""
-                        class="w-4 h-4"
-                    >
-                </button>
             </div>
-            <div class="flex flex-col col-span-12 gap-12 p-20 xl:col-span-9">
-                <div class="p-12  rounded-lg shadow-[12px_12px_0px_0px_#C792EA] bg-black-blue mb-8">
+            <div class="flex flex-col col-span-12 gap-12 xl:col-span-9">
+                <div class="relative p-12 transition-all duration-300 border rounded-lg border-purple form__panel">
+                    <div class="absolute top-0 z-10 px-2 -translate-y-1/2 left-8 bg-darker-blue">
+                        <h2 class="text-lg font-bold text-white lowercase">properties</h2>
+                    </div>
                     <FormRow
                         v-for="(formRow,index) in store.formRows"
                         :key="formRow"
@@ -110,11 +124,11 @@
             </div>
         </div>
         <div class="grid grid-cols-12">
-            <div class="flex flex-col items-start col-span-12 gap-2 p-20 xl:col-span-3">
-                <h2 class="mb-20 text-3xl font-bold text-white ">Generated code</h2>
-            </div>
-            <div class="col-span-12 gap-12 p-20 xl:col-span-9">
-                <div class="flex flex-col gap-8 p-12 rounded-lg shadow-[12px_12px_0px_0px_#F07178] bg-black-blue">
+            <div class="col-span-12 gap-12">
+                <div class="relative flex flex-col gap-8 p-12 transition-all duration-300 border rounded-lg border-pink form__panel">
+                    <div class="absolute top-0 z-10 px-2 -translate-y-1/2 left-8 bg-darker-blue">
+                        <h2 class="text-lg font-bold text-white lowercase">code output</h2>
+                    </div>
                     <CodeOutput 
                         :code="store.getTailwindConfigJs" 
                         :lang="'js'"
@@ -130,9 +144,8 @@
                         class="mb-8"
                     />
                     <CodeOutput 
-                        v-if="store.getGeneratedStyleVariables"
                         :lang="'json'"
-                        :code="store.getGeneratedStyleVariables || { 'hallo': 'test' }" 
+                        :code="store.getGeneratedStyleVariables" 
                         :id="'style-variables'"
                         :heading="'json with stylevariables:'" 
                     />
