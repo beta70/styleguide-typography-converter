@@ -15,6 +15,7 @@
         v-bind:form-rows="formRows" 
         :formRowId="store.formRowId" 
         :base-font-size="baseFontSize"
+        :min-screen-width="minScreenWidth"
         :max-screen-width="maxScreenWidth"
 
         />
@@ -22,10 +23,3 @@
   </div>
 </template>
 
-<style>
-
-    .grid-auto-fit {
-        grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
-    }
-
-</style>

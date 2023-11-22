@@ -2,6 +2,8 @@
     import { onMounted } from 'vue';
     import FormRow from './FormRow.vue';
     import CustomInput from './CustomInput.vue';
+    import Input from './Input.vue';
+    import GlobalInput from './GlobalInput.vue';
     import CodeOutput from './CodeOutput.vue';
     import { useFormRowStore } from '../stores/formRowStore'
 
@@ -9,6 +11,7 @@
 
     const props = defineProps({
         bodyFontSize: String,
+        minScreenWidth: String,
         maxScreenWidth: String,
         formRowId: Number,
     })
@@ -17,13 +20,35 @@
 
 <template>
     <div class="flex flex-col gap-12 p-20 mx-auto max-w-9xl">
-        <div class="grid grid-cols-12">
-            <div class="col-span-12">
-                <div class="relative p-10 transition-all duration-300 border-8 rounded-lg border-ttt-lilac form__panel">
+        <div class="grid grid-cols-12 gap-12">
+            <div class="col-start-4 col-end-13">
+                <div class="relative grid grid-cols-2 transition-all duration-300 border-8 rounded-lg border-ttt-lilac form__panel">
                     <div class="absolute z-10 px-2 -translate-y-1/2 -top-1 left-8 bg-darker-blue">
                         <h2 class="text-lg font-bold lowercase text-papaya">Document styles</h2>
                     </div>
-                    <div class="flex justify-start w-full gap-16">
+
+                    <div class="col-span-2 p-8 border-r-2 lg:col-span-1 border-ttt-lilac">
+                        <GlobalInput 
+                            :field="{
+                                name: 'minScreenWidth',
+                                label: 'min screen width',
+                                placeholder: '320px',
+                            }"
+                        />
+                        </div>
+                        <div class="col-span-2 p-8 border-l-2 lg:col-span-1 border-ttt-lilac">
+
+                        <GlobalInput 
+                            :field="{
+                                name: 'maxScreenWidth',
+                                label: 'max screen width',
+                                placeholder: '1920px',
+                            }"
+                        />
+                    </div>
+
+                    
+                    <!-- <div class="flex justify-start w-full gap-16">
                         <div class="relative flex flex-col h-full gap-4">
                             <label class="block text-xs font-normal tracking-wider text-ttt-thistle bg-darker-blue">body font-size</label>
                             <input 
@@ -42,18 +67,20 @@
                                 class="block w-full p-2 py-3 font-thin text-white bg-transparent border border-ttt-perlwinkle sm:text-xl placeholder-gray-200/50 focus:outline-none" 
                             />
                         </div>
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </div>
         <div class="grid grid-cols-12 gap-12">
             <div class="flex flex-col items-start col-span-12 xl:col-span-3">
-                <div class="relative w-full py-10 transition-all duration-300 border-8 rounded-lg border-ttt-violet form__panel">
+                <div class="relative grid w-full grid-cols-2 py-10 transition-all duration-300 border-8 rounded-lg border-ttt-violet form__panel">
 
                     <div class="absolute z-10 px-2 -translate-y-1/2 -top-1 left-8 bg-darker-blue">
-                        <h2 class="text-lg font-bold lowercase text-papaya">typographic styles</h2>
+                        <h2 class="text-lg font-bold lowercase text-papaya">style preview</h2>
                     </div>
-                    <div class="relative pl-[4.25rem] pr-10">
+
+                    
+                    <!-- <div class="relative pl-[4.25rem] pr-10">
                         <div
                             v-for="(formRow,index) in store.getSortedFormRows"
                             :key="formRow"
@@ -106,14 +133,15 @@
                                 </svg>
                             </div>
                         </button>
-                    </div>
+                    </div> -->
                 </div>
             </div>
             <div class="flex flex-col col-span-12 gap-12 xl:col-span-9">
-                <div class="relative p-10 transition-all duration-300 border-8 rounded-lg border-ttt-violet form__panel">
+                <div class="relative grid grid-cols-2 gap-2 transition-all duration-300 border-8 rounded-lg border-ttt-violet form__panel">
                     <div class="absolute z-10 px-2 -translate-y-1/2 -top-1 left-8 bg-darker-blue">
                         <h2 class="text-lg font-bold lowercase text-papaya">properties</h2>
                     </div>
+
                     <FormRow
                         v-for="(formRow,index) in store.formRows"
                         :key="formRow"
@@ -122,8 +150,35 @@
                         :index="index"
                         :title="formRow.title"
                         @delete-form-row="(id) => $emit('deleteFormRow',id)"
-                        :class="[formRow.active ? 'block' : 'hidden']"
+                        :class="[
+                            formRow.active ? 'block' : 'hidden',
+                            'col-span-2'
+                        ]"
                     />
+                    
+                    <!-- <pre>
+                        <code class="text-white">
+                            {{ store.formRows }}
+                        </code>
+                    </pre> -->
+                    <!-- <div class="col-span-2 p-8 border-r-4 lg:col-span-1 border-ttt-violet">
+                        <Input 
+                            :field="{
+                                name: 'font-size',
+                                placeholder: '320px',
+                            }"
+                        />
+                    </div>
+                    <div class="col-span-2 p-8 border-l-4 lg:col-span-1 border-ttt-violet">
+
+                        <Input 
+                            :field="{
+                                name: 'font-weight',
+                                placeholder: '1920px',
+                            }"
+                        />
+                    </div> -->
+                    
                 </div>
     
             </div>

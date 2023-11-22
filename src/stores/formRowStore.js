@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watchEffect } from 'vue'
+import { lusolve } from 'mathjs'
 
 export const useFormRowStore = defineStore('formRow', () => {
     
@@ -9,20 +10,20 @@ export const useFormRowStore = defineStore('formRow', () => {
 
     const formRowId = ref(0)
     const bodyFontSize = ref(16)
+    const minScreenWidth = ref(320)
     const maxScreenWidth = ref(1920)
     const isBaseFontSize = ref(false)
     const formRowFields = [
         { 
-            name: 'font-size',
-            fieldType: 'input',
-            placeholder: '16px',
-            dataType: 'number',
-            allowedUnits: ['px','rem','em'],
-            conversionOptions: ['rem','vw','clamp()'],
+            name: 'fontSize',
+            label: 'font-size',
             range: true,
-            baseFontSize: false,
-            givenUnit: '',
-            targetUnit: 'rem',
+            placeholder: '16px',
+            allowedUnits: ['px','rem','em'],
+            givenUnit: {
+                min: '',
+                max: ''
+            },
             inputValue: {
                 min: '',
                 max: '',
@@ -30,62 +31,66 @@ export const useFormRowStore = defineStore('formRow', () => {
             convertedValue: '',
         },
         { 
-            name: 'line-height',
-            fieldType: 'input',
-            dataType: 'number',
+            name: 'lineHeight',
+            label: 'line-height',
+            range: true,
             placeholder: '24px',
             allowedUnits: ['px','rem','em','num'],
-            conversionOptions: ['num','rem'],
-            givenUnit: '',
-            targetUnit: 'num',
-            inputValue: '',
+            givenUnit: {
+                min: '',
+                max: ''
+            },
+            inputValue: {
+                min: '',
+                max: '',
+            },
             convertedValue: '',
         },
         { 
-            name: 'letter-spacing',
-            fieldType: 'input',
-            dataType: 'number',
+            name: 'letterSpacing',
+            label: 'letter-spacing',
+            range: true,
             placeholder: '1px',
             allowedUnits: ['px','rem','em'],
-            conversionOptions: ['em','rem'],
-            givenUnit: '',
-            targetUnit: 'em',
-            inputValue: '',
+            givenUnit: {
+                min: '',
+                max: ''
+            },
+            inputValue: {
+                min: '',
+                max: '',
+            },
             convertedValue: '',
         },
         { 
-            name: 'font-weight',
-            fieldType: 'input',
+            name: 'fontWeight',
+            label: 'font-weight',
             placeholder: '400',
-            dataType: 'number',
             inputValue: '',
             convertedValue: '',
         },
         { 
             name: 'color',
-            fieldType: 'input',
+            label: 'color',
             placeholder: '#ACACAC',
-            dataType: 'string',
             inputValue: '',
             convertedValue: '',
             className: '',
         },
         { 
-            name: 'text-transform',
-            fieldType: 'input',
-            placeholder: 'uppercase',
-            allowedUnits: ['uppercase','lowercase','capitalize'],
-            dataType: 'string',
-            inputValue: '',
-            convertedValue: '',
-            className: '',
-        },
-        { 
-            name: 'text-decoration',
-            fieldType: 'input',
+            name: 'textDecoration',
+            label: 'text-decoration',
             placeholder: 'underline',
-            allowedUnits: ['underline','overline','line-through'],
-            dataType: 'string',
+            allowedValues: ['underline','overline','line-through'],
+            inputValue: '',
+            convertedValue: '',
+            className: '',
+        },
+        { 
+            name: 'textTransform',
+            label: 'text-transform',
+            placeholder: 'uppercase',
+            allowedValues: ['uppercase','lowercase','capitalize'],
             inputValue: '',
             convertedValue: '',
             className: '',
@@ -100,6 +105,16 @@ export const useFormRowStore = defineStore('formRow', () => {
             generatedClasses: []
         }
     ])
+    const convertProperty = {
+        fontSize: convertFontSize,
+        lineHeight: convertLineHeight,
+        letterSpacing: convertLetterSpacing,
+        fontWeight: convertFontWeight,
+        textDecoration: convertTextProperty,
+        textTransform: convertTextProperty,
+        // color: this.convertColor(),
+    }
+
 
     // ######################################
     //                getters
@@ -112,10 +127,10 @@ export const useFormRowStore = defineStore('formRow', () => {
     const getMatchingFormRow = computed(() => id => formRows?.value?.filter(formRow => formRow.id === id)[0])
     const getMatchingField = computed(() => (property,id) => getMatchingFormRow.value(id).fields?.filter(field => field.name === property)[0])
     const getNumberFromInput = computed(() => value => value.replace(/[^\d,.]/g,'').replace(/,/g,'.'))
-    const getTrimmedNumber = computed(() => number => parseFloat(number.toFixed(2).toString()))
+    const getTrimmedNumber = computed(() => number => parseFloat((+number).toFixed(2).toString()))
     const getBodyFontSize = computed(() => bodyFontSize.value)
     const getMaxScreenWidth = computed(() => maxScreenWidth.value)
-    const getStyleFontSize = computed(() => id => getMatchingFormRow.value(id).fields[0].inputValue.max || 16)
+    const getStyleFontSize = computed(() => id => getMatchingFormRow.value(id).fields.filter(field => field.name === 'fontSize')[0].inputValue)
     const getStyleData = computed(() => getSortedFormRows.value.map(formRow => formRow.fields.map(field => `${[field.name]}: ${convertStyleData(field.value,field.givenUnit,field.targetUnit,formRow.id) || ''}`)))
     const getCSS = computed(() => generateCSS())
     const getGeneratedStyleVariables = computed(() => generateStyleVariables())
@@ -157,63 +172,155 @@ export const useFormRowStore = defineStore('formRow', () => {
             .forEach(formRow => formRow.active = false)
     }
 
-    function handleInputData(property,value,id,key = 'inputValue') {
-        // TODO: detect givenUnit
+    function handleGlobalInputData(property,value) {
+        if (this.hasOwnProperty(property)) this[property] = value
+
+        convertValues()
+    }
+
+    function handleInputData(property,value,id,range = null) {
+        setProperties(property,value,id,range)
+
+        convertValues()
+    }
+
+    function extractGivenUnit(inputValue,matchingField) {
+        let givenUnit = inputValue.match(/\D/g)?.join('')?.trim()
+        return matchingField?.allowedUnits?.includes(givenUnit) ? givenUnit : matchingField?.allowedUnits?.[0]
+    }
+
+    function setProperties(property,value,id,range) {
         const matchingField = getMatchingField.value(property,id)
-        let givenUnit
 
-        if (property === 'color') {
-            value = value.startsWith('#') ? value : `#${value}`
-            watchEffect(async () => {
-                try {
-                    const res = await fetch(`https://www.thecolorapi.com/id?hex=${value?.replace('#','')}`)
-                    const data = await res.json()
-                    matchingField.className = data?.name?.value.toLowerCase().replace(/[^\w]+/g,'-')
-                } catch (error) {
-                    console.log(error);
-                }
+        if (range) {
+            matchingField.inputValue[range] = value
+            matchingField.givenUnit[range] = extractGivenUnit(value,matchingField)
+        }
+        else if (matchingField.allowedValues.length) {
+            matchingField.inputValue = matchingField.allowedValues.includes(value) ? value : ''
+        }
+        else {
+            matchingField.inputValue = value
+            matchingField.givenUnit = extractGivenUnit(value,matchingField)
+        }
+    }
+
+    function convertValues() {
+        formRows.value.forEach(formRow => {
+            formRow.fields.forEach(field => {
+                convertStyleData(field,formRow.id)
             })
-        }
+        })
+    } 
 
-        if (key === 'inputValue') {
-            if (property === 'text-transform' || property === 'text-decoration') {
+    // TODO: build conversion logic for all properties
+    function convertStyleData(field,id) {
+        if(!field || !convertProperty[field.name]) return 
+        if (field.range && !field.inputValue.min && !field.inputValue.max) return
 
-                if (!matchingField.allowedUnits.includes(value)) {
-                    value = ''
-                }
-
-                givenUnit = undefined
-            } else {
-                givenUnit = value.match(/\D/g)?.join('')?.trim()
-                givenUnit = matchingField?.allowedUnits?.includes(givenUnit) ? givenUnit : matchingField?.allowedUnits?.[0]
-                matchingField['givenUnit'] = givenUnit
-            }
-
-            value = matchingField.dataType === 'string' ? value : getNumberFromInput.value(value)
-            matchingField[key] = value
-
-            setConvertedValues()
-            return
-        }
-
-        if (key === 'min' || key === 'max') {
-            givenUnit = value?.match(/\D/g)?.join('')?.trim()
-            givenUnit = matchingField?.allowedUnits?.includes(givenUnit) ? givenUnit : matchingField?.allowedUnits?.[0]
-            matchingField['givenUnit'] = givenUnit
-            value = matchingField.dataType === 'string' ? value : getNumberFromInput.value(value)
-            matchingField['inputValue'][key] = value
-
-            setConvertedValues()
-            return
-        }
-
-        matchingField[key] = value
-        setConvertedValues()
+        convertProperty[field.name](field,id)
     }
 
-    function handleFontSizeInput(range,property,value,id) {
-        handleInputData(property,value,id,range)
+    function convertFontSize(matchingField,id) {
+        let coefficients = []
+        let constants = []
+
+        let minValue
+        let dynValue
+        let maxValue
+
+        // TODO: add other cases, like rem <-> px or em <-> rem
+        // if (matchingField.givenUnit.min === 'px' && matchingField.givenUnit.max === 'px') {
+
+        minValue = getTrimmedNumber.value(matchingField.inputValue.min/getBodyFontSize.value)
+        maxValue = getTrimmedNumber.value(matchingField.inputValue.max/getBodyFontSize.value)
+        
+        coefficients = [
+            [(+getBodyFontSize.value), (+minScreenWidth.value)],
+            [(+getBodyFontSize.value), (+maxScreenWidth.value)],
+        ]
+        constants = [matchingField.inputValue.min, matchingField.inputValue.max]
+        const [[remFactor],[vwFactor]] = lusolve(coefficients,constants)
+
+        dynValue = `${remFactor.toFixed(2)}rem + ${(vwFactor * 100).toFixed(2)}vw`
+
+        matchingField.convertedValue = `clamp(${minValue}rem, ${dynValue}, ${maxValue}rem)`
+        
+        // } 
     }
+    
+    function convertLineHeight(matchingField,id) {
+        const { min: minFontSize, max: maxFontSize } = getStyleFontSize.value(id) 
+        if (!minFontSize || !maxFontSize) return
+
+        let coefficients = []
+        let constants = []
+
+        let minValue
+        let dynValue
+        let maxValue
+
+        // TODO: add other cases, like rem <-> px or em <-> rem
+        // if (matchingField.givenUnit.min === 'px' && matchingField.givenUnit.max === 'px') {
+
+        minValue = getTrimmedNumber.value(matchingField.inputValue.min/minFontSize)
+        maxValue = getTrimmedNumber.value(matchingField.inputValue.max/maxFontSize)
+        
+        coefficients = [
+            [(+minValue), (+minScreenWidth.value)],
+            [(+minValue), (+maxScreenWidth.value)],
+        ]
+        constants = [minValue, maxValue]
+        const [[numFactor],[vwFactor]] = lusolve(coefficients,constants)
+        dynValue = `${numFactor.toFixed(2)} + ${(vwFactor * 100).toFixed(2)}vw`
+
+        matchingField.convertedValue = minValue === maxValue || Math.abs((vwFactor * 100).toFixed(2)) === 0.00 ? minValue : `clamp(${minValue}, ${dynValue}, ${maxValue})`
+        
+        // } 
+    }
+
+    function convertLetterSpacing(matchingField,id) {
+        const { min: minFontSize, max: maxFontSize } = getStyleFontSize.value(id) 
+        if (!minFontSize || !maxFontSize) return
+
+        let coefficients = []
+        let constants = []
+
+        let minValue
+        let dynValue
+        let maxValue
+
+        // TODO: add other cases, like rem <-> px or em <-> rem
+        // if (matchingField.givenUnit.min === 'px' && matchingField.givenUnit.max === 'px') {
+
+        minValue = getTrimmedNumber.value(matchingField.inputValue.min/minFontSize)
+        maxValue = getTrimmedNumber.value(matchingField.inputValue.max/maxFontSize).toFixed(3) > 0 ? getTrimmedNumber.value(matchingField.inputValue.max/maxFontSize).toFixed(2) : 0
+        
+        coefficients = [
+            [(+minValue), (+minScreenWidth.value)],
+            [(+minValue), (+maxScreenWidth.value)],
+        ]
+        constants = [minValue, maxValue]
+        const [[emFactor],[vwFactor]] = lusolve(coefficients,constants)
+        dynValue = `${emFactor.toFixed(2)}em + ${(vwFactor * 100).toFixed(3)}vw`
+
+        matchingField.convertedValue = minValue === maxValue || Math.abs((vwFactor * 100).toFixed(3)) === 0.00 ? minValue : `clamp(${minValue}em, ${dynValue}, ${maxValue}em)`
+        
+        // } 
+    }
+
+    function convertFontWeight(matchingField,id) {
+        matchingField.convertedValue = getTrimmedNumber.value(matchingField.inputValue)
+    }
+
+    function convertTextProperty(matchingField,id) {
+        matchingField.convertedValue = matchingField.inputValue
+    }
+
+
+
+    
+
 
     function setBaseStyle(id) {
         getMatchingFormRow.value(id).baseStyle = true
@@ -222,79 +329,30 @@ export const useFormRowStore = defineStore('formRow', () => {
             .forEach(formRow => formRow.baseStyle = false)
     }
 
-    function handleGlobalStyleInput(property,value) {
-        if (this.hasOwnProperty(property)) this[property] = value
-        setConvertedValues()
-    }
+    
 
-    function setConvertedValues() {
-        formRows.value.forEach(formRow => {
-            formRow.fields.forEach(field => {
-                convertStyleData(field,formRow.id)
-            })
-        })
-    } 
-
-    function convertStyleData(field,id) {
-        if(!field) return 
-
-        let minFontSize
-        let maxFontSize
-        let inputValue
-
-        if (field.givenUnit === undefined) {
-            field.convertedValue = field.inputValue
-            return 
-        }
-        
-
-        if (field.givenUnit === 'px') {
-            if (typeof field.inputValue === 'object') {
-                minFontSize = field.inputValue.min
-                maxFontSize = field.inputValue.max
-            }
-
-            inputValue = maxFontSize ? maxFontSize : field.inputValue
-
-            if (field.targetUnit === 'rem') {
-                field.convertedValue = getTrimmedNumber.value(inputValue/(getBodyFontSize.value))
-            }
-            if (field.targetUnit === 'em' || field.targetUnit === 'num') {
-                field.convertedValue = getTrimmedNumber.value(inputValue/(getStyleFontSize.value(id)))
-            }
-            if (field.targetUnit === 'vw') {
-                field.convertedValue = getTrimmedNumber.value(inputValue*100/(getMaxScreenWidth.value))
-            }
-            if (field.targetUnit === 'clamp()') {
-                field.convertedValue = `clamp(${getTrimmedNumber.value(minFontSize/getBodyFontSize.value)}rem, ${getTrimmedNumber.value(maxFontSize*100/getMaxScreenWidth.value)}vw, ${getTrimmedNumber.value(maxFontSize/getBodyFontSize.value)}rem)`
-            }
-        }
-    }
 
     function generateCustomTailwindClasses() {
-        let fieldName = ''
         const configObject = { 'theme': { 'extend': {} } }
         const convertedValues = {}
         const convertedValuesSet = {}
         
         formRowFields.reduce((acc,formRowField) => {
-            if (formRowField.name === 'text-transform' || formRowField.name === 'text-decoration') return
+            if (formRowField.name === 'textTransform' || formRowField.name === 'textDecoration') return
 
-            fieldName = formRowField.name.replace(/((?<=-)[a-z])/g, (match) => match.toUpperCase()).replace(/(?!\w)-/g,'')
-            convertedValues[fieldName] = {}
-            convertedValuesSet[fieldName] = []
+            convertedValues[formRowField.name] = {}
+            convertedValuesSet[formRowField.name] = []
             let classIndex = 1
             
             getSortedFormRows.value.forEach((sortedFormRow,index) => {
                 let matchingField = sortedFormRow.fields.filter(field => field.name === formRowField.name)[0]
                 let convertedValue = matchingField.convertedValue
-                let targetUnit = convertedValue ? matchingField.targetUnit : ''
-                let className = ''
+                let className
 
                 if (!convertedValue) return 
 
                 switch (matchingField.name) {
-                    case 'font-weight':
+                    case 'fontWeight':
                         if (convertedValue === 0 || convertedValue > 1000) return 
                         if (convertedValue % 100 === 0) return
                         className = `fw${convertedValue}`
@@ -303,14 +361,14 @@ export const useFormRowStore = defineStore('formRow', () => {
                         className = matchingField.className
                         break;
                     default:
-                        let classNameAbbr = `${fieldName.match(/^[a-z]/g)}${fieldName.match(/((?<=\w)[A-Z])/g)}`
+                        let classNameAbbr = `${formRowField.name.match(/^[a-z]/g)}${formRowField.name.match(/((?<=\w)[A-Z])/g)}`
                         className = `${classNameAbbr.toLowerCase()}${classIndex}`
                         break;
                 }
 
-                if (convertedValuesSet[fieldName].includes(convertedValue) && convertedValue !== '') return
-                if (convertedValue) convertedValues[fieldName][className] = `${convertedValue}${targetUnit === 'clamp()' || targetUnit === 'num' ? '' : targetUnit || ''}`
-                if (acc) convertedValuesSet[fieldName].push(convertedValue)
+                if (convertedValuesSet[formRowField.name].includes(convertedValue) && convertedValue !== '') return
+                if (convertedValue) convertedValues[formRowField.name][className] = `${convertedValue}`
+                if (acc) convertedValuesSet[formRowField.name].push(convertedValue)
 
                 classIndex ++
             })
@@ -344,9 +402,8 @@ export const useFormRowStore = defineStore('formRow', () => {
 
             sortedFormRow.fields.forEach(field => {
                 let convertedValue = field.convertedValue 
-                let targetUnit = convertedValue ? field.targetUnit : ''
 
-                if (convertedValue) generatedCSS.typography['DEFAULT']['css'][selectorName][field.name] = `${convertedValue}${targetUnit === 'clamp()' || targetUnit === 'num' ? '' : targetUnit || ''}`
+                if (convertedValue) generatedCSS.typography['DEFAULT']['css'][selectorName][field.label] = `${convertedValue}`
             })
         })
 
@@ -364,20 +421,16 @@ export const useFormRowStore = defineStore('formRow', () => {
                 classIndex = 1
             }
 
-            console.log(sortedFormRow);
-            
             let variableName = `${switchClassNames === true ? 's' : 't'}${classIndex}`
             generatedStyleVariables[variableName] = {}
             getMatchingFormRow.value(sortedFormRow.id).indexTitle = variableName
             let styleClasses = []
 
             sortedFormRow.fields.forEach(field => {
-                console.log('field: ',field);
                 let propertyName = field.name.replace(/((?<=-)[a-z])/g, (match) => match.toUpperCase()).replace(/(?!\w)-/g,'')
                 let styleValue = `${field.convertedValue}${field.targetUnit === 'clamp()' || field.targetUnit === 'num' ? '' : field.targetUnit || ''}`
 
                 if (field.name === 'text-transform' || field.name === 'text-decoration') {
-                    console.log('here');
                     if (field.inputValue) styleClasses.push(field.inputValue)
                     return
                 }
@@ -485,8 +538,11 @@ export const useFormRowStore = defineStore('formRow', () => {
     return { 
         formRowId, 
         bodyFontSize, 
+        minScreenWidth, 
         maxScreenWidth, 
         formRows, 
+        convertFontSize, 
+        // convertLineHeight, 
         getDeepCopy, 
         copyCode,
         getFieldData, 
@@ -504,11 +560,10 @@ export const useFormRowStore = defineStore('formRow', () => {
         showActiveFormRow, 
         deleteFormRow, 
         handleInputData, 
-        handleFontSizeInput, 
         setBaseStyle, 
-        handleGlobalStyleInput, 
-        convertStyleData, 
-        setConvertedValues, 
+        handleGlobalInputData, 
+        // convertStyleData, 
+        convertValues, 
         generateCSS, 
         generateStyleVariables 
     }
