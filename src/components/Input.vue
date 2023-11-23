@@ -13,7 +13,7 @@
 <template>
     <div class="flex flex-col h-full gap-16">
         <div class="flex flex-col h-full gap-4">
-            <label class="block text-xs font-bold tracking-widest text-ttt-perlwinkle bg-darker-blue">{{ field.name }}</label>
+            <label class="block text-xs font-bold tracking-widest text-ttt-perlwinkle bg-darker-blue">{{ field.label }}</label>
             <input 
                 :placeholder="field.placeholder" 
                 v-model="value"

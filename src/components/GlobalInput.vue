@@ -16,7 +16,7 @@
             <input 
                 :placeholder="field.placeholder" 
                 v-model="value"
-                @change="store.handleGlobalStyleInput(field.name,value)"
+                @change="store.handleGlobalInputData(field.name,value)"
                 class="block w-full max-w-xs p-2 py-3 text-lg font-bold text-gray-200 bg-transparent border border-ttt-perlwinkle placeholder-white/30 focus:outline-none" 
             />
         </div>

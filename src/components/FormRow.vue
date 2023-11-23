@@ -37,24 +37,36 @@
         </div> -->
         <div class="border-b-2 border-ttt-lilac">
             <div 
-                v-for="field in fields.filter(field => field.range)"
+                v-for="(field,index) in fields.filter(field => field.range)"
                 :key="field"
                 class="relative grid grid-cols-2"
             >
-                <div class="col-span-2 p-8 pb-12 border-r-2 lg:col-span-1 border-ttt-lilac">
+                <div 
+                    :class="[
+                        index === 0 ? 'pt-8 pb-4' : index === 2 ? 'pt-6 pb-12' : 'py-6',
+                        'px-8 col-span-2 border-r-2 lg:col-span-1 border-ttt-lilac'
+                    ]"
+                >
                     <Input 
                         :field="{
                             name: field.name,
+                            label: field.label,
                             placeholder: field.placeholder,
                             range: 'min'
                         }"
                         :formRowId="formRowId"
                     />
                 </div>
-                <div class="col-span-2 p-8 pb-12 border-l-2 lg:col-span-1 border-ttt-lilac">
+                <div 
+                    :class="[
+                        index === 0 ? 'pt-8 pb-4' : index === 2 ? 'pt-6 pb-12' : 'py-6',
+                        'px-8 col-span-2 border-l-2 lg:col-span-1 border-ttt-lilac'
+                    ]"
+                >
                     <Input 
                         :field="{
                             name: field.name,
+                            label: field.label,
                             placeholder: field.placeholder,
                             range: 'max'
                         }"

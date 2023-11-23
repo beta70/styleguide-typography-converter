@@ -114,7 +114,24 @@ export const useFormRowStore = defineStore('formRow', () => {
         textTransform: convertTextProperty,
         // color: this.convertColor(),
     }
-
+    const tailwindClassPrefixes = {
+        fontSize: 'text-',
+        lineHeight: 'leading-',
+        letterSpacing: 'tracking-',
+        fontWeight: 'font-',
+        color: 'text-',
+    }
+    const tailwindFontWeightClasses = {
+        100: 'font-thin',
+        200: 'font-extralight',
+        300: 'font-light',
+        400: 'font-normal',
+        500: 'font-medium',
+        600: 'font-semibold',
+        700: 'font-bold',
+        800: 'font-extrabold',
+        900: 'font-black',
+    }
 
     // ######################################
     //                getters
@@ -129,14 +146,14 @@ export const useFormRowStore = defineStore('formRow', () => {
     const getNumberFromInput = computed(() => value => value.replace(/[^\d,.]/g,'').replace(/,/g,'.'))
     const getTrimmedNumber = computed(() => number => parseFloat((+number).toFixed(2).toString()))
     const getBodyFontSize = computed(() => bodyFontSize.value)
-    const getMaxScreenWidth = computed(() => maxScreenWidth.value)
+    // const getMaxScreenWidth = computed(() => maxScreenWidth.value)
     const getStyleFontSize = computed(() => id => getMatchingFormRow.value(id).fields.filter(field => field.name === 'fontSize')[0].inputValue)
     const getStyleData = computed(() => getSortedFormRows.value.map(formRow => formRow.fields.map(field => `${[field.name]}: ${convertStyleData(field.value,field.givenUnit,field.targetUnit,formRow.id) || ''}`)))
     const getCSS = computed(() => generateCSS())
     const getGeneratedStyleVariables = computed(() => generateStyleVariables())
     const getTailwindConfigJs = computed(() => generateCustomTailwindClasses())
     const getTailwindClassPrefix = computed(() => property => generateTailwindClassPrefix(property))
-    const getTailwindFontWeightClass = computed(() => value => generateTailwindFontWeightClass(value))
+    // const getTailwindFontWeightClass = computed(() => value => generateTailwindFontWeightClass(value))
 
     // ######################################
     //                 actions
@@ -196,7 +213,7 @@ export const useFormRowStore = defineStore('formRow', () => {
             matchingField.inputValue[range] = value
             matchingField.givenUnit[range] = extractGivenUnit(value,matchingField)
         }
-        else if (matchingField.allowedValues.length) {
+        else if (matchingField.allowedValues) {
             matchingField.inputValue = matchingField.allowedValues.includes(value) ? value : ''
         }
         else {
@@ -244,7 +261,7 @@ export const useFormRowStore = defineStore('formRow', () => {
 
         dynValue = `${remFactor.toFixed(2)}rem + ${(vwFactor * 100).toFixed(2)}vw`
 
-        matchingField.convertedValue = `clamp(${minValue}rem, ${dynValue}, ${maxValue}rem)`
+        matchingField.convertedValue = minValue === maxValue || Math.abs((vwFactor * 100).toFixed(2)) === 0.00 ? `${minValue}rem` : `clamp(${minValue}rem, ${dynValue}, ${maxValue}rem)`
         
         // } 
     }
@@ -310,17 +327,12 @@ export const useFormRowStore = defineStore('formRow', () => {
     }
 
     function convertFontWeight(matchingField,id) {
-        matchingField.convertedValue = getTrimmedNumber.value(matchingField.inputValue)
+        matchingField.convertedValue = getTrimmedNumber.value(matchingField.inputValue).toString()
     }
 
     function convertTextProperty(matchingField,id) {
         matchingField.convertedValue = matchingField.inputValue
     }
-
-
-
-    
-
 
     function setBaseStyle(id) {
         getMatchingFormRow.value(id).baseStyle = true
@@ -328,9 +340,6 @@ export const useFormRowStore = defineStore('formRow', () => {
             .filter(formRow => formRow.id !== id)
             .forEach(formRow => formRow.baseStyle = false)
     }
-
-    
-
 
     function generateCustomTailwindClasses() {
         const configObject = { 'theme': { 'extend': {} } }
@@ -424,29 +433,30 @@ export const useFormRowStore = defineStore('formRow', () => {
             let variableName = `${switchClassNames === true ? 's' : 't'}${classIndex}`
             generatedStyleVariables[variableName] = {}
             getMatchingFormRow.value(sortedFormRow.id).indexTitle = variableName
-            let styleClasses = []
+            const styleClasses = []
 
             sortedFormRow.fields.forEach(field => {
-                let propertyName = field.name.replace(/((?<=-)[a-z])/g, (match) => match.toUpperCase()).replace(/(?!\w)-/g,'')
-                let styleValue = `${field.convertedValue}${field.targetUnit === 'clamp()' || field.targetUnit === 'num' ? '' : field.targetUnit || ''}`
+                if (!field.convertedValue) return 
 
-                if (field.name === 'text-transform' || field.name === 'text-decoration') {
-                    if (field.inputValue) styleClasses.push(field.inputValue)
+                if (field.name === 'fontWeight' && tailwindFontWeightClasses.hasOwnProperty(field.convertedValue)) {
+                    styleClasses.push(tailwindFontWeightClasses[field.convertedValue]) 
+                    return
+                }
+                if (field.name === 'textDecoration' || field.name === 'textTransform') {
+                    styleClasses.push(field.convertedValue)
                     return
                 }
 
-                if (!getTailwindConfigJs.value.theme.extend.hasOwnProperty(propertyName) || (propertyName === 'fontSize' && !Object.keys(getTailwindConfigJs.value.theme.extend.fontSize).length)) return
+                Object.entries(getTailwindConfigJs.value.theme.extend[field.name]).forEach(entry => {
+                    if (!entry.length) return
 
-                if (field.name === 'font-weight' && !Object.values(getTailwindConfigJs.value.theme.extend['fontWeight']).length) styleClasses.push(`${getTailwindFontWeightClass.value(field.inputValue)}`) 
+                    const className = entry[0]
+                    const value = entry[1]
 
-                Object.entries(getTailwindConfigJs.value.theme.extend[propertyName]).forEach(entry => {
-                    const property = entry[0]
-                    const convertedValue = entry[1]
-                    if (convertedValue === styleValue) {
-                        styleClasses.push(`${getTailwindClassPrefix.value(property)}${property}`)
+                    if (value === field.convertedValue) {
+                        styleClasses.push(`${tailwindClassPrefixes[field.name]}${className}`)
                         return
                     }
-
                 }) 
             })
             
@@ -456,75 +466,14 @@ export const useFormRowStore = defineStore('formRow', () => {
 
         return generatedStyleVariables
     }
-    function generateTailwindClassPrefix(property) {
-        let propertyAbbr = property.substring(0,2)
-        let prefix = ''
-
-        switch (propertyAbbr) {
-            case 'fs':
-                prefix = 'text-'
-                break;
-            case 'lh':
-                prefix = 'leading-'
-                break;
-            case 'ls':
-                prefix = 'tracking-'
-                break;
-            case 'fw':
-                prefix = 'font-'
-                break;
-            default:
-                prefix = 'text-'
-                break;
-        }
-        
-        return prefix
-    }
-    function generateTailwindFontWeightClass(value) {
-        let className = ''
-
-        switch (value) {
-            case '100':
-                className = 'font-thin'
-                break;
-            case '200':
-                className = 'font-extralight'
-                break;
-            case '300':
-                className = 'font-light'
-                break;
-            case '400':
-                className = 'font-normal'
-                break;
-            case '500':
-                className = 'font-medium'
-                break;
-            case '600':
-                className = 'font-semibold'
-                break;
-            case '700':
-                className = 'font-bold'
-                break;
-            case '800':
-                className = 'font-extrabold'
-                break;
-            case '900':
-                className = 'font-black'
-                break;
-            default:
-                className = 'font-normal'
-                break;
-        }
-        
-        return className
-    }
+    
     function sortFormRows(a,b) {
-        const aFontSize = a.fields.filter(field => field.name === 'font-size')[0].inputValue.max 
-        const bFontSize = b.fields.filter(field => field.name === 'font-size')[0].inputValue.max 
-        const aFontWeight = a.fields.filter(field => field.name === 'font-weight')[0].inputValue || '400'
-        const bFontWeight = b.fields.filter(field => field.name === 'font-weight')[0].inputValue || '400'
-        const aLineHeight = a.fields.filter(field => field.name === 'line-height')[0].inputValue
-        const bLineHeight = b.fields.filter(field => field.name === 'line-height')[0].inputValue
+        const aFontSize = a.fields.filter(field => field.name === 'fontSize')[0].inputValue.max 
+        const bFontSize = b.fields.filter(field => field.name === 'fontSize')[0].inputValue.max 
+        const aFontWeight = a.fields.filter(field => field.name === 'fontWeight')[0].inputValue || '400'
+        const bFontWeight = b.fields.filter(field => field.name === 'fontWeight')[0].inputValue || '400'
+        const aLineHeight = a.fields.filter(field => field.name === 'lineHeight')[0].inputValue
+        const bLineHeight = b.fields.filter(field => field.name === 'lineHeight')[0].inputValue
 
         if (aFontSize === bFontSize) {
             if (bFontWeight === aFontWeight) {
