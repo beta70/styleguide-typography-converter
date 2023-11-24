@@ -21,7 +21,7 @@
 <template>
     <div class="flex flex-col gap-12 p-20 mx-auto max-w-9xl">
         <div class="grid grid-cols-12 gap-12">
-            <div class="col-start-1 col-end-13 2xl:col-start-4">
+            <div class="col-span-12">
                 <div class="relative grid grid-cols-2 transition-all duration-300 border-8 rounded-lg border-ttt-lilac form__panel">
                     <div class="absolute z-10 px-2 -translate-y-1/2 -top-1 left-8 bg-darker-blue">
                         <h2 class="text-lg font-bold lowercase text-papaya">Document styles</h2>
@@ -50,7 +50,7 @@
             </div>
         </div>
         <div class="grid grid-cols-12 gap-12">
-            <div class="flex flex-col items-start order-2 col-span-12 2xl:col-span-3 2xl:order-1">
+            <div class="flex flex-col items-start order-2 col-span-12">
                 <div class="relative flex flex-col w-full transition-all duration-300 border-8 rounded-lg border-ttt-violet form__panel">
                     <div class="absolute z-10 px-2 -translate-y-1/2 -top-1 left-8 bg-darker-blue">
                         <h2 class="text-lg font-bold lowercase text-papaya">style preview</h2>
@@ -78,12 +78,17 @@
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z" fill="currentColor"/></svg>
                                     </div>
-                                    style {{ formRow.indexTitle }}
+                                    <span 
+                                        class="line-clamp-1"
+                                        :style="Object.entries(formRow.inlineStyle).map(inlineStyle => inlineStyle.join(':')).join(';')"
+                                    >
+                                        style {{ formRow.indexTitle }}
+                                    </span>
                                 </button>
                                 <button 
                                     @click="store.deleteFormRow(formRow.id)"
                                     type="button" 
-                                    class="flex items-center"
+                                    class="flex items-center shrink-0"
                                     v-if="formRow.active"
                                 >
                                     <img 
@@ -113,7 +118,7 @@
                     </div>
                 </div>
             </div>
-            <div class="flex flex-col order-1 col-span-12 gap-12 2xl:col-span-9 2xl:order-2">
+            <div class="flex flex-col order-1 col-span-12 gap-12">
                 <div class="relative grid grid-cols-2 gap-2 transition-all duration-300 border-8 rounded-lg border-ttt-violet form__panel">
                     <div class="absolute z-10 px-2 -translate-y-1/2 -top-1 left-8 bg-darker-blue">
                         <h2 class="text-lg font-bold lowercase text-papaya">properties</h2>

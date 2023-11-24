@@ -7,7 +7,7 @@
     const props = defineProps(['code','id','heading', 'lang'])
     const codeOutput = ref('')
 
-    watchPostEffect(async () => {
+    watchEffect(async () => {
         if (props.code) {
             try {
                 const highlighter = await shiki.getHighlighter({
@@ -19,6 +19,7 @@
     
                 codeOutput.value = highlighter.codeToHtml(jsonString, { lang: props.lang });
                 document.getElementById(props.id).innerHTML = codeOutput.value;
+                await nextTick()
             } catch (error) {
                 console.error(error);
             }
@@ -36,7 +37,7 @@
         >
         <div 
             :id="props.id"
-            class="flex justify-around w-full m-4 text-left cursor-pointer group"
+            class="flex justify-around w-full p-8 text-left cursor-pointer group"
         >
         </div>
         <div class="absolute flex items-center gap-4 top-8 right-8 group-hover:opacity-100">
@@ -55,9 +56,9 @@
 <style>
 
 .shiki {
-    padding: 2rem;
     width: 100%;
     background-color: transparent!important;
+    overflow-x: scroll;
 }
 
 </style>
