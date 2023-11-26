@@ -8,8 +8,6 @@ module.exports = {
     extend: {
       fontFamily: {
         'martian': ['MartianMono','ui-sans-serif', 'system-ui'],
-        'source-code': ['SourceCode','ui-sans-serif', 'system-ui'],
-        'noto': ['NotoSans','ui-sans-serif', 'system-ui']
       },
       colors: {
         'black-blue': '#08090C',

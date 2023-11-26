@@ -19,15 +19,15 @@
 </script>
 
 <template>
-    <div class="flex flex-col gap-12 p-20 mx-auto max-w-9xl">
-        <div class="grid grid-cols-12 gap-12">
+    <div class="flex flex-col gap-12 p-6 mx-auto sm:p-8 lg:p-20 max-w-9xl">
+        <div class="grid grid-cols-12 gap-4 lg:gap-12">
             <div class="col-span-12">
                 <div class="relative grid grid-cols-2 transition-all duration-300 border-8 rounded-lg border-ttt-lilac form__panel">
                     <div class="absolute z-10 px-2 -translate-y-1/2 -top-1 left-8 bg-darker-blue">
                         <h2 class="text-lg font-bold lowercase text-papaya">Document styles</h2>
                     </div>
 
-                    <div class="col-span-2 p-8 border-r-2 lg:col-span-1 border-ttt-lilac">
+                    <div class="col-span-1 p-6 border-r-2 lg:p-8 border-ttt-lilac">
                         <GlobalInput 
                             :field="{
                                 name: 'minScreenWidth',
@@ -36,7 +36,7 @@
                             }"
                         />
                         </div>
-                        <div class="col-span-2 p-8 border-l-2 lg:col-span-1 border-ttt-lilac">
+                        <div class="col-span-1 p-6 border-l-2 lg:p-8 border-ttt-lilac">
 
                         <GlobalInput 
                             :field="{
@@ -49,14 +49,34 @@
                 </div>
             </div>
         </div>
-        <div class="grid grid-cols-12 gap-12">
-            <div class="flex flex-col items-start order-2 col-span-12">
+        <div class="grid grid-cols-12 gap-4 lg:gap-12">
+            <div class="flex flex-col col-span-12 gap-12">
+                <div class="relative grid grid-cols-2 gap-2 transition-all duration-300 border-8 rounded-lg border-ttt-violet form__panel">
+                    <div class="absolute z-10 px-2 -translate-y-1/2 -top-1 left-8 bg-darker-blue">
+                        <h2 class="text-lg font-bold lowercase text-papaya">properties</h2>
+                    </div>
+
+                    <FormRow
+                        v-for="(formRow,index) in store.formRows"
+                        :key="formRow"
+                        v-bind:fields="formRow.fields"
+                        v-bind:formRowId="formRow.id"
+                        :index="index"
+                        :title="formRow.title"
+                        :class="[
+                            formRow.active ? 'block' : 'hidden',
+                            'col-span-2'
+                        ]"
+                    />
+                </div>
+            </div>
+            <div class="flex flex-col items-start col-span-12">
                 <div class="relative flex flex-col w-full transition-all duration-300 border-8 rounded-lg border-ttt-violet form__panel">
                     <div class="absolute z-10 px-2 -translate-y-1/2 -top-1 left-8 bg-darker-blue">
                         <h2 class="text-lg font-bold lowercase text-papaya">style preview</h2>
                     </div>
                     <div class="border-b-2 border-ttt-violet">
-                        <div class="flex flex-col gap-4 p-8">
+                        <div class="flex flex-col gap-4 p-6 lg:p-8">
                             <div
                                 v-for="(formRow,index) in store.getSortedFormRows"
                                 :key="formRow"
@@ -74,22 +94,25 @@
                                 >
                                     <div 
                                         v-if="formRow.baseStyle"
-                                        class="absolute w-5 -left-8"
+                                        class="w-5"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z" fill="currentColor"/></svg>
                                     </div>
                                     <span 
-                                        class="line-clamp-1"
+                                        class="line-clamp-1 shrink-0"
                                         :style="Object.entries(formRow.inlineStyle).map(inlineStyle => inlineStyle.join(':')).join(';')"
                                     >
                                         style {{ formRow.indexTitle }}
                                     </span>
                                 </button>
                                 <button 
-                                    @click="store.deleteFormRow(formRow.id)"
+                                    @click="
+                                        store.deleteFormRow(formRow.id),
+                                        store.showActiveFormRow(store.getSortedFormRows[store.getSortedFormRows.length - 1].id)
+                                    "
                                     type="button" 
                                     class="flex items-center shrink-0"
-                                    v-if="formRow.active"
+                                    v-if="formRow.active && store.getSortedFormRows.length > 1"
                                 >
                                     <img 
                                         src="../assets/images/close.svg" 
@@ -100,7 +123,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="p-8 border-t-2 border-ttt-violet">
+                    <div class="p-4 border-t-2 lg:p-8 border-ttt-violet">
                         <div class="flex items-center">
                             <button 
                                 @click="store.addFormRow()"
@@ -118,58 +141,20 @@
                     </div>
                 </div>
             </div>
-            <div class="flex flex-col order-1 col-span-12 gap-12">
-                <div class="relative grid grid-cols-2 gap-2 transition-all duration-300 border-8 rounded-lg border-ttt-violet form__panel">
-                    <div class="absolute z-10 px-2 -translate-y-1/2 -top-1 left-8 bg-darker-blue">
-                        <h2 class="text-lg font-bold lowercase text-papaya">properties</h2>
-                    </div>
-
-                    <FormRow
-                        v-for="(formRow,index) in store.formRows"
-                        :key="formRow"
-                        v-bind:fields="formRow.fields"
-                        v-bind:formRowId="formRow.id"
-                        :index="index"
-                        :title="formRow.title"
-                        @delete-form-row="(id) => $emit('deleteFormRow',id)"
-                        :class="[
-                            formRow.active ? 'block' : 'hidden',
-                            'col-span-2'
-                        ]"
-                    />
-                    
-                    <!-- <pre>
-                        <code class="text-white">
-                            {{ store.formRows }}
-                        </code>
-                    </pre> -->
-                    <!-- <div class="col-span-2 p-8 border-r-4 lg:col-span-1 border-ttt-violet">
-                        <Input 
-                            :field="{
-                                name: 'font-size',
-                                placeholder: '320px',
-                            }"
-                        />
-                    </div>
-                    <div class="col-span-2 p-8 border-l-4 lg:col-span-1 border-ttt-violet">
-
-                        <Input 
-                            :field="{
-                                name: 'font-weight',
-                                placeholder: '1920px',
-                            }"
-                        />
-                    </div> -->
-                    
-                </div>
-            </div>
         </div>
         <div class="grid grid-cols-12">
-            <div class="col-span-12 gap-12">
-                <div class="relative flex flex-col gap-8 p-12 transition-all duration-300 border-8 rounded-lg border-ttt-murrey form__panel">
+            <div class="col-span-12 gap-4 lg:gap-12">
+                <div class="relative flex flex-col gap-8 p-6 transition-all duration-300 border-8 rounded-lg lg:p-12 border-ttt-murrey form__panel">
                     <div class="absolute z-10 px-2 -translate-y-1/2 -top-1 left-8 bg-darker-blue">
                         <h2 class="text-lg font-bold lowercase text-papaya">code output</h2>
                     </div>
+                    <!-- <CodeOutput 
+                        :code="store.formRows" 
+                        :lang="'js'"
+                        :id="'testing'"
+                        :heading="'tailwind.config.js theme extension:'" 
+                        class="mb-8"
+                    /> -->
                     <CodeOutput 
                         :code="store.getTailwindConfigJs" 
                         :lang="'js'"

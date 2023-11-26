@@ -141,8 +141,9 @@ export const useFormRowStore = defineStore('formRow', () => {
         800: 'font-extrabold',
         900: 'font-black',
     }
-
-    const colorRef = ref('')
+    const styles = {
+        inputLabel: 'block text-sm font-bold tracking-wider text-ttt-perlwinkle bg-darker-blue'
+    }
 
     // ######################################
     //                getters
@@ -190,7 +191,6 @@ export const useFormRowStore = defineStore('formRow', () => {
     }
 
     function copyCode(code) {
-        console.log('clicked', code);
         navigator.clipboard.writeText(JSON.stringify(code, null, 2))
     }
 
@@ -211,6 +211,7 @@ export const useFormRowStore = defineStore('formRow', () => {
         setProperties(property,value,id,range)
 
         convertValues()
+        generateInlineCSS()
     }
 
     function extractGivenUnit(inputValue,matchingField) {
@@ -244,13 +245,17 @@ export const useFormRowStore = defineStore('formRow', () => {
 
     // TODO: build conversion logic for all properties
     function convertStyleData(field,id) {
-        if(!field || !field.inputValue || !convertProperty[field.name]) return 
-        if (field.range && !field.inputValue.min && !field.inputValue.max) return
+        if(!field || !convertProperty[field.name]) return 
 
         convertProperty[field.name](field,id)
     }
 
     function convertFontSize(matchingField,id) {
+        if (!matchingField.inputValue.min && !matchingField.inputValue.max) {
+            matchingField.convertedValue = ''
+            return
+        }
+
         let coefficients = []
         let constants = []
 
@@ -259,14 +264,6 @@ export const useFormRowStore = defineStore('formRow', () => {
         let maxValue
 
         // TODO: add other cases, like rem <-> px or em <-> rem
-        // if (matchingField.givenUnit.min === 'px' && matchingField.givenUnit.max === 'px') {
-
-        /*
-
-            16px = 16px * x + 320 * y
-            48px = 16px * x + 1920 * y
-
-        */
 
         minValue = getTrimmedNumber.value(matchingField.inputValue.min/getBodyFontSize.value)
         maxValue = getTrimmedNumber.value(matchingField.inputValue.max/getBodyFontSize.value)
@@ -281,13 +278,14 @@ export const useFormRowStore = defineStore('formRow', () => {
         dynValue = `${remFactor.toFixed(2)}rem + ${(vwFactor * 100).toFixed(2)}vw`
 
         matchingField.convertedValue = minValue === maxValue || Math.abs((vwFactor * 100).toFixed(2)) === 0.00 ? `${minValue}rem` : `clamp(${minValue}rem, ${dynValue}, ${maxValue}rem)`
-        
-        // } 
     }
     
     function convertDetailTypo(matchingField,id) {
         const { min: minFontSize, max: maxFontSize } = getStyleFontSize.value(id) 
-        if (!minFontSize || !maxFontSize) return
+        if (!minFontSize || !maxFontSize) {
+            matchingField.convertedValue = ''
+            return
+        }
 
         let minPxValue
         let minEmValue
@@ -297,15 +295,28 @@ export const useFormRowStore = defineStore('formRow', () => {
 
         // TODO: add other cases, like rem <-> px or em <-> rem
         minPxValue = getTrimmedNumber.value(matchingField.inputValue.min)
-        minEmValue = getTrimmedNumber.value(matchingField.inputValue.min/minFontSize)
         maxPxValue = getTrimmedNumber.value(matchingField.inputValue.max)
+        minEmValue = getTrimmedNumber.value(matchingField.inputValue.min/minFontSize)
         maxEmValue = getTrimmedNumber.value(matchingField.inputValue.max/maxFontSize)
 
         dynValue = `calc(${minPxValue}px + (${maxPxValue} - ${minPxValue}) * ( 100vw - ${(+minScreenWidth.value)}px ) / ( ${(+maxScreenWidth.value)} - ${(+minScreenWidth.value)} ) )`
 
-        matchingField.convertedValue = minEmValue === maxEmValue 
-            ? `${minEmValue}em` 
-            : `clamp(${Math.min(minEmValue,maxEmValue)}em, ${dynValue}, ${Math.max(minEmValue,maxEmValue)}em)`
+        if (!minEmValue && !maxEmValue) {
+            matchingField.convertedValue = ''
+            return
+        }
+
+        if (minEmValue === maxEmValue) {
+            matchingField.convertedValue = `${minEmValue}em`
+            return
+        }
+
+        if (!minEmValue || !maxEmValue) {
+            matchingField.convertedValue = minEmValue ? `${minEmValue}em` : `${maxEmValue}em`
+            return
+        }
+
+        matchingField.convertedValue = `clamp(${Math.min(minEmValue,maxEmValue)}em, ${dynValue}, ${Math.max(minEmValue,maxEmValue)}em)`
     }
 
     function convertFontWeight(matchingField,id) {
@@ -331,15 +342,17 @@ export const useFormRowStore = defineStore('formRow', () => {
             ? matchingField.inputValue
             : matchingField.inputValue.match(withoutHash)
             ? `#${matchingField.inputValue}`
-            : null 
+            : '' 
 
         watchEffect(async () => {
-            try {
-                const res = await fetch(`https://www.thecolorapi.com/id?hex=${matchingField.convertedValue.replace('#','')}`);
-                const data = await res.json();
-                matchingField.className = data?.name?.value.toLowerCase().replace(/[^\w]+/g,'-');
-            } catch (error) {
-                console.log(error);
+            if (matchingField.inputValue) {
+                try {
+                    const res = await fetch(`https://www.thecolorapi.com/id?hex=${matchingField.convertedValue.replace('#','')}`);
+                    const data = await res.json();
+                    matchingField.className = data?.name?.value.toLowerCase().replace(/[^\w]+/g,'-');
+                } catch (error) {
+                    console.log(error);
+                }
             }
         })
     }
@@ -423,10 +436,6 @@ export const useFormRowStore = defineStore('formRow', () => {
 
                 if (convertedValue) {
                     generatedCSS.typography['DEFAULT']['css'][selectorName][field.label] = `${convertedValue}`
-
-                    console.log(convertedValue);
-                    getMatchingFormRow.value(sortedFormRow.id).inlineStyle[field.label] = convertedValue
-                    
                 }
             })
         })
@@ -435,8 +444,15 @@ export const useFormRowStore = defineStore('formRow', () => {
     }
 
     function generateInlineCSS() {
-        console.log('generate inline css');
-        return getCSS.value
+        getSortedFormRows.value.forEach((sortedFormRow,index) => {
+            sortedFormRow.fields.forEach(field => {
+                let convertedValue = field.convertedValue 
+
+                if (convertedValue) {
+                    getMatchingFormRow.value(sortedFormRow.id).inlineStyle[field.label] = convertedValue
+                }
+            })
+        })
     }
 
     function generateStyleVariables() {
@@ -536,6 +552,6 @@ export const useFormRowStore = defineStore('formRow', () => {
         generateCSS, 
         getInlineCSS, 
         generateStyleVariables, 
-        colorRef 
+        styles 
     }
 })
