@@ -1,25 +1,21 @@
 
 <script setup>
-    import { nextTick, onMounted, ref, watchEffect, watch, watchPostEffect } from 'vue'
+    import { nextTick, onMounted, ref, watchEffect, watch, watchPostEffect, onUpdated } from 'vue'
     import { useFormRowStore } from '../stores/formRowStore'
+    import Prism from 'prismjs'
+    import 'prismjs/themes/prism-okaidia.min.css'
+    // import 'prismjs/themes/prism-tomorrow.css'
 
     const store = useFormRowStore()
     const props = defineProps(['code','id','heading', 'lang'])
-    const codeOutput = ref('')
     const codeCopied = ref(false)
+    const codeElement = ref(null)
 
     watchEffect(async () => {
-        if (props.code) {
+        if (props.code && codeElement.value) {
             try {
-                const highlighter = await shiki.getHighlighter({
-                    theme: 'material-theme-palenight',
-                    langs: ['json', 'js'],
-                });
-    
                 const jsonString = JSON.stringify(props.code, null, 2);
-    
-                codeOutput.value = highlighter.codeToHtml(jsonString, { lang: props.lang });
-                document.getElementById(props.id).innerHTML = codeOutput.value;
+                codeElement.innerHTML = jsonString;
                 await nextTick()
             } catch (error) {
                 console.error(error);
@@ -27,6 +23,12 @@
         }
     });
 
+    onMounted(() => {
+        Prism.highlightElement(codeElement.value)
+    })
+    onUpdated(() => {
+        Prism.highlightElement(codeElement.value)
+    })
 </script>
 
 <template>
@@ -44,6 +46,14 @@
                 :id="props.id"
                 class="flex justify-around w-full p-8 text-left cursor-pointer group"
             >
+                <pre>
+                    <code 
+                        ref="codeElement" 
+                        class="language-javascript"
+                    >
+                    {{ props.code }}
+                    </code>
+                </pre>
             </div>
             <div class="absolute flex items-center gap-4 top-4 lg:top-8 right-4 lg:right-8 text-gray-200/50">
                 <span class="block tracking-wider text-md">{{ props.lang }}</span>
@@ -71,7 +81,7 @@
 
 <style>
 
-.shiki {
+pre {
     width: 100%;
     background-color: transparent!important;
     overflow-x: scroll;
